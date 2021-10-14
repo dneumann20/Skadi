@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Skadi</string>
+    <string name="start_data_collection">Start Data Collection</string>
+    <string name="stop_data_collection">Stop Data Collection</string>
+    <string name="data_collection_on">Collecting data…</string>
+    <string name="data_collection_off">Data Collection is currently off</string>
+</resources>
