@@ -1,11 +1,12 @@
 package com.example.skadi;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -17,9 +18,6 @@ import androidx.annotation.NonNull;
 import com.example.skadi.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
-import com.google.android.gms.wearable.CapabilityClient;
-import com.google.android.gms.wearable.CapabilityInfo;
-import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.MessageClient;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
@@ -27,179 +25,149 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import androidx.core.app.ActivityCompat;
 
 public class MainActivity extends Activity implements SensorEventListener, MessageClient.OnMessageReceivedListener {
 
     private final static String TAG = "Wear MainActivity";
     String dataPath = "/message_path";
+    private static final String msgStart = "START_RECORDING";
+    private static final String msgStop = "STOP_RECORDING";
 
-    private Button btnHeartRateRecording;
+    //private Button btnHeartRateRecording;
     private TextView heartRateView;
-    private ActivityMainBinding binding;
-    private boolean buttonActivated = false;
-
-    //TODO remove after testing
-    private TextView messageTest;
-    int num = 1;
+    private TextView recording_on_off;
 
     MessageClient messageClient;
 
-    //TODO look up proper use or remove?
-    DataClient dataClient;
-
     private SensorManager sensorManager;
     private Sensor heartRateSensor;
-    private Integer heartRateValue = 0;
-    private ConnectivityManager connectivityManager;
-    private static final String MESSAGE_TRANSFER_CAPABILITY_NAME = "message_transfer";
+
+    private Integer heartRateValue = null;
+
+    ExecutorService executor = Executors.newFixedThreadPool(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
 
-        //Set Button
-        btnHeartRateRecording = findViewById(R.id.btnHeartRateRecording);
-        btnHeartRateRecording.setOnClickListener(toggleHeartRate);
+        /*
+          Set Button;
+          The button is for debugging purposes and shows current data in the textView below
+          is either toggled manually or by signal from the mobile phone
+         */
+        //btnHeartRateRecording = findViewById(R.id.btnHeartRateRecording);
+        //btnHeartRateRecording.setOnClickListener(toggleButton);
 
         //Set TextViews
         heartRateView = findViewById(R.id.heartRateView);
-        messageTest = findViewById(R.id.messageTest);
+        recording_on_off = findViewById(R.id.messageTest);
 
         //Set HeartRate sensor
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-        if (heartRateSensor  == null) {
-            Log.d(TAG, "Warning: no heartRateSensor");
-        } else {
-            // Needs testing how much the battery drains on FASTEST mode
-            sensorManager.registerListener((SensorEventListener) this, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        }
 
+        //Set Message client
         messageClient = Wearable.getMessageClient(getApplicationContext());
 
-        // TODO check data client usage
-        //dataClient = Wearable.getDataClient(getApplicationContext());
+        // Since the Polar m600 watch is used here it shouldn't matter, but just in case
+        if (heartRateSensor == null) {
+            Log.d(TAG, "Warning: no heartRateSensor");
+            heartRateView.setText(R.string.no_HeartRateSensor);
+        }
+
+        // Check if App has access on the heart rate sensor, if not request it
+        if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions( this, new String[] {  Manifest.permission.BODY_SENSORS  },2);
+        }
     }
-
-    /*private void setupVoiceTranscription() {
-        try {
-            CapabilityInfo capabilityInfo = Tasks.await(
-                    Wearable.getCapabilityClient(this).getCapability(
-                            MESSAGE_TRANSFER_CAPABILITY_NAME, CapabilityClient.FILTER_REACHABLE));
-
-            CapabilityClient.OnCapabilityChangedListener capabilityListener =
-                    capabilityInfo1 -> { updateTransferionCapability(capabilityInfo); };
-            Wearable.getCapabilityClient(this).addListener(
-                    capabilityListener,
-                    MESSAGE_TRANSFER_CAPABILITY_NAME);
-
-
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        // capabilityInfo has the reachable nodes with the transcription capability
-    }
-
-    private void setupVoiceTranscription() {
-        // This example uses a Java 8 Lambda. You can use named or anonymous classes.
-        CapabilityClient.OnCapabilityChangedListener capabilityListener =
-                capabilityInfo -> { updateTransferCapability(capabilityInfo); };
-        Wearable.getCapabilityClient(context).addListener(
-                capabilityListener,
-                VOICE_TRANSCRIPTION_CAPABILITY_NAME);
-    }*/
-
-
-    public View.OnClickListener toggleHeartRate = v -> {
-        this.buttonActivated = !this.buttonActivated;
-        if (this.buttonActivated) {
-            btnHeartRateRecording.setText(R.string.button_stop);
-            activateSensor();
-        }
-        else {
-            btnHeartRateRecording.setText(R.string.button_start);
-            deactivateSensor();
-        }
-    };
 
     private void activateSensor() {
         if (sensorManager != null) {
-            if (heartRateSensor != null) {
-                sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
-            }
+            sensorManager.registerListener((SensorEventListener) this, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            heartRateValue = 0;
             heartRateView.setText(String.valueOf(heartRateValue));
         }
     }
 
     private void deactivateSensor() {
         if (sensorManager != null) {
-            if (heartRateSensor != null) {
-                sensorManager.unregisterListener((SensorEventListener) this);
-                //TODO change layout -> nur heartrate, kein Text davor(?)
-                heartRateView.setText(R.string.heartRateDisplay_off);
-                //heartRateView.setText("Button deactivated");
-                heartRateValue = 0;
-                //heartRateView.setText("Off: "+ heartRateValue.toString());
-            }
-            else {
-                heartRateView.setText("No HeartRate sensor");
-            }
+            sensorManager.unregisterListener((SensorEventListener) this, heartRateSensor);
+            heartRateValue = null;
+            heartRateView.setText(R.string.heartRateSensor_off);
         }
     }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        //Update your data. This check is very raw. You should improve it when the sensor is unable to calculate the heart rate
         if (sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE) {
-            if (heartRateSensor != null) {
-                sensorManager.registerListener((SensorEventListener) this, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
-            } else {
-                heartRateValue = (int)sensorEvent.values[0];
-                heartRateView.setText(new StringBuilder().append(R.string.heartRateDisplay_off).append(heartRateValue).toString());
-            }
+            heartRateValue = (int)sensorEvent.values[0];
+            heartRateView.setText(String.format(""+heartRateValue));
+
+            //Send a message back.
+            String msgUpdatedHeartRateValue = heartRateValue.toString();
+            executor = Executors.newFixedThreadPool(1);
+            executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
     }
 
+    // auto override
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
         Log.d(TAG, "onAccuracyChanged - accuracy: " + i);
     }
 
+    // auto override
     @Override
     protected void onResume() {
         super.onResume();
         Wearable.getMessageClient(this).addListener(this);
     }
-
+    // auto override
     @Override
     protected void onPause() {
         super.onPause();
         Wearable.getMessageClient(this).removeListener(this);
     }
 
+    /**
+     * Starts/Stops the transmission of heart rate sensor data
+     * @param messageEvent : Message to start or stop the sensor and data recording
+     */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
-        // TODO send Message with current Sensor data to mobile device
-
-        Log.d(TAG, "onMessageReceived() A message from watch was received:"
-                + messageEvent.getRequestId() + " " + messageEvent.getPath());
         String message =new String(messageEvent.getData());
-        Log.v(TAG, "Wear activity received message: " + message);
-        // Display message in UI
-        messageTest.setText("PING: " + num);
-        //Send a message back.
-        // TODO STOP THREAD (siehe Mobile)
-        message = new String("YEET");
-        new SendThread(dataPath, message).start();
+        if(message.equals(msgStart)) {
+            //Activate sensor on receiving
+            activateSensor();
+            Log.v(TAG, "Wear activity received start message: " + message);
+
+            heartRateView.setText(R.string.plain_zero);
+            recording_on_off.setText(R.string.receivedStarted);
+        }
+        else if (message.equals(msgStop)) {
+            deactivateSensor();
+            executor.shutdownNow();
+            Log.v(TAG, "Wear activity received stop message: " + message);
+
+            heartRateValue = null;
+            heartRateView.setText(R.string.heartRateSensor_off);
+            recording_on_off.setText(R.string.recordingStopped);
+        }
+        else {
+            Log.e("ERROR: ",message);
+        }
     }
 
     // Send the Data back to Mobile Phone
+    // TODO restructure to function?
     class SendThread extends Thread {
         String path;
         String message;
@@ -210,8 +178,6 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
             message = msg;
         }
 
-        //sends the message via the thread.  this will send to all wearables connected, but
-        //since there is (should only?) be one, so no problem.
         public void run() {
             //first get all the nodes, ie connected wearable devices.
             Task<List<Node>> nodeListTask =

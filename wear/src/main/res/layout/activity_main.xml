@@ -14,20 +14,21 @@
         android:padding="@dimen/inner_frame_layout_padding"
         app:layout_boxedEdges="all">
 
-        <Button
+        <!--<Button
             android:id="@+id/btnHeartRateRecording"
             android:layout_gravity="center"
             android:layout_marginBottom="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button_start" />
+            android:text="@string/button_start" />-->
 
         <TextView
             android:id="@+id/heartRateView"
-            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="15sp"
             android:text="@string/heartRateDisplay_off" />
 
         <TextView
@@ -37,8 +38,7 @@
             android:textSize="11sp"
             android:textAlignment="center"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="message receive test" />
+            android:text="@string/recordingStopped" />
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

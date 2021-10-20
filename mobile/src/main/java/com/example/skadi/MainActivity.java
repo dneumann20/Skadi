@@ -1,4 +1,5 @@
 package com.example.skadi;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -31,21 +32,32 @@ public class MainActivity extends AppCompatActivity implements
         View.OnClickListener {
 
     String dataPath = "/message_path";
+
     Button startSensorButton;
-    TextView logger;
+
+    TextView currentHeartRate;
+    TextView heartRateValue;
+    TextView recordingStatus;
+
     protected Handler handler;
     String TAG = "Mobile MainActivity";
-    int num = 1;
     boolean dataCollectionActive = false;
+    private static final String msgStart = "START_RECORDING";
+    private static final String msgStop = "STOP_RECORDING";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //get the widgets
+
+        // Set text views
+        currentHeartRate = findViewById(R.id.currentHeartRate); // Plain textView with static text
+        heartRateValue = findViewById(R.id.heartRateValue);
+        recordingStatus = findViewById(R.id.recordingStatus);
+
+        // Set button
         startSensorButton = findViewById(R.id.start_data_collection);
         startSensorButton.setOnClickListener(this);
-        logger = findViewById(R.id.TEST);
 
         //message handler for the send thread.
         handler = new Handler(new Handler.Callback() {
@@ -79,25 +91,35 @@ public class MainActivity extends AppCompatActivity implements
                 + messageEvent.getRequestId() + " " + messageEvent.getPath());
         String message = new String(messageEvent.getData());
         Log.v(TAG, "Main activity received message: " + message);
+        Log.d(TAG, "Received data: " + message);
         // Display message in UI
-        logger.setText(message);
+        heartRateValue.setText(message);
     }
 
+    //TODO remove executor / Thread after restructuring?
     private ExecutorService executor = Executors.newFixedThreadPool(1);
 
     public void onClick(View v) {
         this.dataCollectionActive = !this.dataCollectionActive;
         if(this.dataCollectionActive) {
+
             startSensorButton.setText(R.string.stop_data_collection);
-            String message = "PING: " + num;
+            recordingStatus.setText(R.string.data_collection_on);
+
             //Requires a new thread to avoid blocking the UI
             executor = Executors.newFixedThreadPool(1);
-            executor.submit(new SendThread(dataPath, message));
+            executor.submit(new SendThread(dataPath, msgStart));
         }
+
+        //TODO Needs proper testing
         else {
-            executor.shutdownNow();
+            heartRateValue.setText(R.string.plain_zero);
             startSensorButton.setText(R.string.start_data_collection);
-            logger.setText("TEST");
+            recordingStatus.setText(R.string.data_collection_on);
+
+            executor = Executors.newFixedThreadPool(1);
+            executor.submit(new SendThread(dataPath, msgStop));
+            executor.shutdown();
         }
 
     }
@@ -111,10 +133,9 @@ public class MainActivity extends AppCompatActivity implements
         msg.arg1 = 1;
         msg.what = 1; //so the empty message is not used!
         handler.sendMessage(msg);
-
     }
 
-
+    //TODO restructure to normal method?
     //This actually sends the message to the wearable device.
     class SendThread extends Thread {
         String path;

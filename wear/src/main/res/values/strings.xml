@@ -4,8 +4,9 @@
     This string is used for square devices and overridden by hello_world in
     values-round/strings.xml for round devices.
     -->
-    <string name="heartRateDisplay_off">Heart Rate Sensor off</string>
-    <string name="button_start">Start Recording</string>
-    <string name="button_stop">Stop Recording</string>
-    <string name="connected_nodes">"Connected Nodes: "</string>
+    <string name="plain_zero">0</string>
+    <string name="heartRateSensor_off">Heart Rate Sensor off</string>
+    <string name="no_HeartRateSensor">No Heart Rate Sensor found</string>
+    <string name="receivedStarted">Signal from Mobile App received, recording…</string>
+    <string name="recordingStopped">Click button on the companion mobile app to start Heart Rate sensor.</string>
 </resources>
