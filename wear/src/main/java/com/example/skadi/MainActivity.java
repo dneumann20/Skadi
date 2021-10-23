@@ -77,7 +77,7 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
         //Set Message client
         messageClient = Wearable.getMessageClient(getApplicationContext());
 
-        // Since the Polar m600 watch is used here it shouldn't matter, but just in case
+        // Since we assume a smartwatch with heart rate sensor is used it shouldn't matter, but just in case
         if (heartRateSensor == null) {
             Log.d(TAG, "Warning: no heartRateSensor");
             heartRateView.setText(R.string.no_HeartRateSensor);

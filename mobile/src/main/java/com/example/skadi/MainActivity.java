@@ -96,8 +96,6 @@ public class MainActivity extends AppCompatActivity implements
         heartRateValue.setText(message);
     }
 
-    private ExecutorService executor = Executors.newFixedThreadPool(1);
-
     public void onClick(View v) {
         this.dataCollectionActive = !this.dataCollectionActive;
         if(this.dataCollectionActive) {
