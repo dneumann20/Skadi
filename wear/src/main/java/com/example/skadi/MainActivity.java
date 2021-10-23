@@ -154,7 +154,7 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
         }
         else if (message.equals(msgStop)) {
             deactivateSensor();
-            executor.shutdownNow();
+            //executor.shutdownNow();
             Log.v(TAG, "Wear activity received stop message: " + message);
 
             heartRateValue = null;

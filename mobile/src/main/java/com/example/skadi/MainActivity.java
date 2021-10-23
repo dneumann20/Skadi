@@ -96,7 +96,6 @@ public class MainActivity extends AppCompatActivity implements
         heartRateValue.setText(message);
     }
 
-    //TODO remove executor / Thread after restructuring?
     private ExecutorService executor = Executors.newFixedThreadPool(1);
 
     public void onClick(View v) {
@@ -107,25 +106,22 @@ public class MainActivity extends AppCompatActivity implements
             recordingStatus.setText(R.string.data_collection_on);
 
             //Requires a new thread to avoid blocking the UI
-            executor = Executors.newFixedThreadPool(1);
-            executor.submit(new SendThread(dataPath, msgStart));
+            new SendThread(dataPath, msgStart).start();
         }
 
-        //TODO Needs proper testing
         else {
             heartRateValue.setText(R.string.plain_zero);
             startSensorButton.setText(R.string.start_data_collection);
             recordingStatus.setText(R.string.data_collection_on);
 
-            executor = Executors.newFixedThreadPool(1);
-            executor.submit(new SendThread(dataPath, msgStop));
-            executor.shutdown();
+            //Requires a new thread to avoid blocking the UI
+            new SendThread(dataPath, msgStop).start();
         }
 
     }
 
     //method to create up a bundle to send to a handler via the thread below.
-    public void sendMessage(String logthis) {
+    /*public void sendMessage(String logthis) {
         Bundle b = new Bundle();
         b.putString("logthis", logthis);
         Message msg = handler.obtainMessage();
@@ -133,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements
         msg.arg1 = 1;
         msg.what = 1; //so the empty message is not used!
         handler.sendMessage(msg);
-    }
+    }*/
 
     //TODO restructure to normal method?
     //This actually sends the message to the wearable device.
@@ -168,11 +164,10 @@ public class MainActivity extends AppCompatActivity implements
                         // Block on a task and get the result synchronously (because this is on a background
                         // thread).
                         Integer result = Tasks.await(sendMessageTask);
-                        sendMessage("SendThread: message send to " + node.getDisplayName());
-                        Log.v(TAG, "SendThread: message send to " + node.getDisplayName());
+                        Log.v(TAG, "SendThread: message sent ("+result+") to " + node.getDisplayName());
 
                     } catch (ExecutionException exception) {
-                        sendMessage("SendThread: message failed to" + node.getDisplayName());
+                        //sendMessage("SendThread: message failed to" + node.getDisplayName());
                         Log.e(TAG, "Send Task failed: " + exception);
 
                     } catch (InterruptedException exception) {
@@ -182,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
 
             } catch (ExecutionException exception) {
-                sendMessage("Node Task failed: " + exception);
+                //sendMessage("Node Task failed: " + exception);
                 Log.e(TAG, "Node Task failed: " + exception);
 
             } catch (InterruptedException exception) {
