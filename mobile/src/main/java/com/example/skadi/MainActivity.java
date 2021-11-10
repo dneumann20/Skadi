@@ -112,25 +112,12 @@ public class MainActivity extends AppCompatActivity implements
             startSensorButton.setText(R.string.start_data_collection);
             recordingStatus.setText(R.string.data_collection_on);
 
-            //Requires a new thread to avoid blocking the UI
             new SendThread(dataPath, msgStop).start();
         }
 
     }
 
-    //method to create up a bundle to send to a handler via the thread below.
-    /*public void sendMessage(String logthis) {
-        Bundle b = new Bundle();
-        b.putString("logthis", logthis);
-        Message msg = handler.obtainMessage();
-        msg.setData(b);
-        msg.arg1 = 1;
-        msg.what = 1; //so the empty message is not used!
-        handler.sendMessage(msg);
-    }*/
-
-    //TODO restructure to normal method?
-    //This actually sends the message to the wearable device.
+    // Thread to send the message to the wearable device. Thread is destroyed afterwards.
     class SendThread extends Thread {
         String path;
         String message;
@@ -141,8 +128,8 @@ public class MainActivity extends AppCompatActivity implements
             message = msg;
         }
 
-        //sends the message via the thread.  this will send to all wearables connected, but
-        //since there is (should only?) be one, no problem.
+        // sends the message via the thread.  this will send to all wearables connected.
+        // Currently it's assumed the Polar watch is the only connected device.
         public void run() {
 
             //first get all the nodes, ie connected wearable devices.
