@@ -9,7 +9,7 @@
             android:id="@+id/currentHeartRate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="200dp"
+            android:layout_marginTop="100dp"
             android:text="@string/current_heartRate"
             android:textSize="25sp"
             android:gravity="center" />
@@ -19,7 +19,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="@string/plain_zero"
+                android:text=""
                 android:textSize="20sp"
             android:gravity="center" />
 
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/start_data_collection"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="20dp"
             android:textSize="25sp"
             android:layout_gravity="center_horizontal"/>
 
@@ -37,8 +37,36 @@
             android:id="@+id/recordingStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
+            android:layout_marginBottom="20dp"
             android:text="@string/data_collection_off"
+            android:textSize="20sp"
+            android:gravity="center" />
+
+        <Button
+            android:id="@+id/toggle_hono_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="100dp"
+            android:text="@string/connect_to_hono"
+            android:textSize="25sp" />
+
+        <TextView
+            android:id="@+id/honoConnectionStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:text="@string/disconnected_from_hono"
+            android:textSize="20sp"
+            android:gravity="center" />
+
+        <!--TODO remove after test-->
+        <TextView
+            android:id="@+id/testMessageToHono"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:text="@string/hono_message_test"
             android:textSize="20sp"
             android:gravity="center" />
 

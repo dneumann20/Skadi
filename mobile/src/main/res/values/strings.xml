@@ -6,5 +6,11 @@
     <string name="data_collection_on">Data Collection is on</string>
     <string name="current_heartRate">Current Heart Rate:</string>
     <string name="data_collection_off">Data Collection is currently off</string>
+    <string name="connect_to_hono">Connect to Hono</string>
+    <string name="disconnect_from_hono">Disconnect from Hono</string>
+    <string name="connected_to_hono">Hono status: Connected</string>
+    <string name="disconnected_from_hono">Hono status: Disconnected</string>
+    <string name="hono_message_test">Hono Message Test</string>
+    <string name="hono_message_test_success">Message test successful</string>
 
 </resources>
