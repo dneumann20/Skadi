@@ -1,53 +1,140 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-        <TextView
-            android:id="@+id/currentHeartRate"
+        <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100dp"
-            android:text="@string/current_heartRate"
-            android:textSize="25sp"
-            android:gravity="center" />
+            android:layout_marginTop="30dp">
 
-        <TextView
-                android:id="@+id/heartRateValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text=""
-                android:textSize="20sp"
-            android:gravity="center" />
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
 
-        <!--Button to start collecting and displaying data from the smartwatch-->
-        <Button
-            android:id="@+id/start_data_collection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/start_data_collection"
-            android:layout_marginTop="20dp"
-            android:textSize="25sp"
-            android:layout_gravity="center_horizontal"/>
+                        <Button
+                            android:id="@+id/btnHeartRateSensor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="@string/start"
+                            android:textSize="20sp"
+                            android:layout_marginLeft="30sp"/>
 
-        <TextView
-            android:id="@+id/recordingStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="@string/data_collection_off"
-            android:textSize="20sp"
-            android:gravity="center" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="@string/heartRateValue"/>
+
+                        <TextView
+                            android:id="@+id/heartRateSensorValueView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginLeft="2dp"
+                            android:text="@string/sensorOff" />
+
+                </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
+
+                        <Button
+                            android:id="@+id/btnGyroscopeSensor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="@string/start"
+                            android:textSize="20sp"
+                            android:layout_marginLeft="30sp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="@string/gyroscopeValue"/>
+
+                        <TextView
+                            android:id="@+id/gyroscopeSensorValueView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginLeft="2dp"
+                            android:text="@string/sensorOff" />
+
+                </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
+
+                        <Button
+                            android:id="@+id/btnAcceleratorSensor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="@string/start"
+                            android:textSize="20sp"
+                            android:layout_marginLeft="30sp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="@string/acceleratorValue"/>
+
+                        <TextView
+                            android:id="@+id/acceleratorSensorValueView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginLeft="2dp"
+                            android:text="@string/sensorOff" />
+
+                </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
+
+                        <Button
+                            android:id="@+id/btnLightSensor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="@string/start"
+                            android:textSize="20sp"
+                            android:layout_marginLeft="30sp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="@string/lightValue"/>
+
+                        <TextView
+                            android:id="@+id/lightSensorValueView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginLeft="2dp"
+                            android:text="@string/sensorOff" />
+
+                </TableRow>
+
+        </TableLayout>
 
         <Button
             android:id="@+id/toggle_hono_connection"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="100dp"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="150dp"
             android:text="@string/connect_to_hono"
             android:textSize="25sp" />
 
@@ -55,19 +142,10 @@
             android:id="@+id/honoConnectionStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="120dp"
             android:text="@string/disconnected_from_hono"
             android:textSize="20sp"
             android:gravity="center" />
 
-        <!--TODO remove after test-->
-        <TextView
-            android:id="@+id/testMessageToHono"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="@string/hono_message_test"
-            android:textSize="20sp"
-            android:gravity="center" />
-
-</LinearLayout>
+</FrameLayout>

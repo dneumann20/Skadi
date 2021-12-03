@@ -29,23 +29,34 @@ import java.util.concurrent.ExecutionException;
  * the paired wearable.
  */
 public class MainActivity extends AppCompatActivity implements
-        MessageClient.OnMessageReceivedListener {
+        MessageClient.OnMessageReceivedListener, View.OnClickListener {
 
     String dataPath = "/message_path";
     String TAG = "Mobile MainActivity";
 
-    Button btnToggleSensor;
     Button btnToggleMqttConnection;
 
-    TextView currentHeartRate;
-    TextView heartRateValue;
-    TextView recordingStatus;
+    //Buttons to toggle Sensor activation
+    Button btnToggleHeartRateSensor;
+    Button btnToggleGyroscopeSensor;
+    Button btnToggleAcceleratorSensor;
+    Button btnToggleLightSensor;
+
+    boolean heartRateSensorActive = false;
+    boolean gyroscopeSensorActive = false;
+    boolean acceleratorSensorActive = false;
+    boolean lightSensorActive = false;
+
+    TextView heartRateValueView ;
+    TextView gyroscopeValueView;
+    TextView acceleratorValueView;
+    TextView lightValueView;
+
     TextView honoConnectionStatus;
 
     // TODO remove after testing
-    TextView testMessageToHono;
+    Button btnSendTestMessage;
 
-    boolean dataCollectionActive = false;
     boolean honoConnectionActive = false;
 
     private static final String msgStart = "START_RECORDING";
@@ -78,34 +89,37 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Set text views
-        currentHeartRate = findViewById(R.id.currentHeartRate); // Plain textView with static text
-        heartRateValue = findViewById(R.id.heartRateValue); // textView that shows the actual heart rate
-        recordingStatus = findViewById(R.id.recordingStatus); // Shows whether recording is on or off
+        // Set text views showing sensor values, default value: "Sensor off"
+        heartRateValueView = findViewById(R.id.heartRateSensorValueView);
+        gyroscopeValueView = findViewById(R.id.gyroscopeSensorValueView);
+        acceleratorValueView = findViewById(R.id.acceleratorSensorValueView);
+        lightValueView = findViewById(R.id.lightSensorValueView);
+
         honoConnectionStatus = findViewById(R.id.honoConnectionStatus); // Shows whether connected to Hono
 
-        //TODO Remove
-        testMessageToHono = findViewById(R.id.testMessageToHono);
-
         // Set buttons
-        btnToggleSensor = findViewById(R.id.start_data_collection);
-        btnToggleSensor.setOnClickListener(this::toggleDataCollection);
+        /*btnToggleSensor = findViewById(R.id.start_data_collection);
+        btnToggleSensor.setOnClickListener(this::toggleDataCollection);*/
+
+        btnToggleHeartRateSensor = findViewById(R.id.btnHeartRateSensor);
+        btnToggleHeartRateSensor.setOnClickListener(this);
+        btnToggleGyroscopeSensor = findViewById(R.id.btnGyroscopeSensor);
+        btnToggleGyroscopeSensor.setOnClickListener(this);
+        btnToggleAcceleratorSensor = findViewById(R.id.btnAcceleratorSensor);
+        btnToggleAcceleratorSensor.setOnClickListener(this);
+        btnToggleLightSensor = findViewById(R.id.btnLightSensor);
+        btnToggleLightSensor.setOnClickListener(this);
 
         btnToggleMqttConnection = findViewById(R.id.toggle_hono_connection);
-        btnToggleMqttConnection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    toggleHonoConnection(v);
-                }
-                catch (MqttException | UnsupportedEncodingException e){
-                    Log.d(TAG, "Connect via Button Click "+e.toString());
-                    e.printStackTrace();
-                }
-
+        btnToggleMqttConnection.setOnClickListener(v -> {
+            try {
+                toggleHonoConnection(v);
+            }
+            catch (MqttException | UnsupportedEncodingException e){
+                Log.d(TAG, "Connect via Button Click "+e.toString());
+                e.printStackTrace();
             }
         });
-
     }
 
     @Override
@@ -131,12 +145,32 @@ public class MainActivity extends AppCompatActivity implements
         String message = new String(messageEvent.getData());
         Log.d(TAG, "Main activity received message: " + message);
         Log.d(TAG, "Received data: " + message);
-        // Display message in UI
-        heartRateValue.setText(message);
+        //Check the message prefix which sensor sends the current data
+
+        String newValue = message.substring(1);
+
+        //data comes from heart rate sensor
+        if(message.charAt(0) == 'h') {
+            message = message.substring(1);
+            // Display value without prefix
+            heartRateValueView.setText(newValue);
+        }
+        //data comes from gyroscope
+        if(message.charAt(0) == 'g') {
+            gyroscopeValueView.setText(newValue);
+        }
+        //data comes from accelerator
+        if(message.charAt(0) == 'a') {
+            acceleratorValueView.setText(newValue);
+        }
+        //data comes from light sensor
+        if(message.charAt(0) == 'l') {
+            lightValueView.setText(newValue);
+        }
 
         //TODO forward via MQTT Client
         /*try {
-            pahoMqttClient.publishMessage(client, message, qos, topic+"heartRate");
+            pahoMqttClient.publishMessage(client, newValue, qos, topic+"heartRate");
 
             Log.i("MQTT", "Message published");
         } catch (MqttException | MqttPersistenceException e) {
@@ -146,25 +180,68 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    public void toggleDataCollection(View v) {
-        this.dataCollectionActive = !this.dataCollectionActive;
-        if(this.dataCollectionActive) {
+    @Override
+    public void onClick(View v) {
+        // toggle HeartRateSensor
+        if(v == btnToggleHeartRateSensor) {
+            //revert boolean value
+            heartRateSensorActive = !heartRateSensorActive;
+            if(heartRateSensorActive) {
+                //Initial value after activation is 0 until value gets updated by received value
+                heartRateValueView.setText(R.string.plain_zero);
+                btnToggleHeartRateSensor.setText(R.string.stop);
 
-            heartRateValue.setText(R.string.plain_zero); // Initial value is 0
-            btnToggleSensor.setText(R.string.stop_data_collection);
-            recordingStatus.setText(R.string.data_collection_on);
-
-            // Sends message to start heart rate Sensor
-            new SendThread(dataPath, msgStart).start();
+            } else {
+                heartRateValueView.setText(R.string.sensorOff);
+                btnToggleHeartRateSensor.setText(R.string.start);
+            }
+            // Send message to toggle Sensor on watch
+            new SendThread(dataPath, "heartRate").start();
         }
+        // toggle Gyroscope Sensor
+        else if(v == btnToggleGyroscopeSensor) {
+            //revert boolean value
+            gyroscopeSensorActive = !gyroscopeSensorActive;
+            if(gyroscopeSensorActive) {
+                //Initial value after activation is 0 until value gets updated by received value
+                gyroscopeValueView.setText(R.string.plain_zero);
+                btnToggleGyroscopeSensor.setText(R.string.stop);
+            } else {
+                gyroscopeValueView.setText(R.string.sensorOff);
+                btnToggleGyroscopeSensor.setText(R.string.start);
+            }
 
-        else {
-            heartRateValue.setText("");
-            btnToggleSensor.setText(R.string.start_data_collection);
-            recordingStatus.setText(R.string.data_collection_off);
-
-            // Sends message to stop heart rate Sensor
-            new SendThread(dataPath, msgStop).start();
+            new SendThread(dataPath, "gyroscope").start();
+        }
+        // toggle Accelerator Sensor
+        else if(v == btnToggleAcceleratorSensor) {
+            //revert boolean value
+            acceleratorSensorActive = !acceleratorSensorActive;
+            if(acceleratorSensorActive) {
+                //Initial value after activation is 0 until value gets updated by received value
+                acceleratorValueView.setText(R.string.plain_zero);
+                btnToggleAcceleratorSensor.setText(R.string.stop);
+            } else {
+                acceleratorValueView.setText(R.string.sensorOff);
+                btnToggleAcceleratorSensor.setText(R.string.start);
+            }
+            // Send message to toggle Sensor on watch
+            new SendThread(dataPath, "accelerator").start();
+        }
+        // toggle LightSensor
+        else if(v == btnToggleLightSensor) {
+            //revert boolean value
+            lightSensorActive = !lightSensorActive;
+            if(lightSensorActive) {
+                //Initial value after activation is 0 until value gets updated by received sensor data
+                lightValueView.setText(R.string.plain_zero);
+                btnToggleLightSensor.setText(R.string.stop);
+            } else {
+                lightValueView.setText(R.string.sensorOff);
+                btnToggleLightSensor.setText(R.string.start);
+            }
+            // Send message to toggle Sensor on watch
+            new SendThread(dataPath, "light").start();
         }
     }
 
@@ -183,26 +260,33 @@ public class MainActivity extends AppCompatActivity implements
     private void connectMQTTClient() {
 
         try {
-            client = pahoMqttClient.getMqttClient(getApplicationContext(),
+            this.client = pahoMqttClient.getMqttClient(getApplicationContext(),
                     MQTT_ADAPTER_IP_URI, CLIENT_DEVICE_ID, USERNAME, PASSWORD);
+
             honoConnectionActive = !honoConnectionActive;
-            honoConnectionStatus.setText(R.string.disconnected_from_hono);
-            btnToggleMqttConnection.setText(R.string.connect_to_hono);
+            honoConnectionStatus.setText(R.string.connected_to_hono);
+            btnToggleMqttConnection.setText(R.string.disconnect_from_hono);
+            btnSendTestMessage.setEnabled(true);
         } catch (MqttException e) {
             Log.d(TAG, "Failure to connect."+e.toString());
         }
-
-        //Send test message
-        try {
-            String message = "connectSuccess";
-            pahoMqttClient.publishMessage(client, message, qos, topic+"sendTestMessage");
-
-            testMessageToHono.setText(R.string.hono_message_test);
-        } catch (MqttException | UnsupportedEncodingException e){
-            Log.d(TAG, "Failure to send: "+e.toString());
-            e.printStackTrace();
-        }
     }
+
+    // TODO remove after test
+    /*public void sendTestMessage(View v) {
+        if(client.isConnected()){
+            Log.d(TAG, "Client still connected");
+                try {
+                String message = "connectSuccess";
+                pahoMqttClient.publishMessage(this.client, message, qos, topic+"sendTestMessage");
+
+                testMessageToHono.setText(R.string.hono_message_test_success);
+            } catch (MqttException | UnsupportedEncodingException e){
+                Log.d(TAG, "Failure to send: "+e.toString());
+                e.printStackTrace();
+            }
+        }
+    }*/
 
     /**
      * Trying disconnect from MQTT Server
@@ -213,6 +297,7 @@ public class MainActivity extends AppCompatActivity implements
             honoConnectionActive = !honoConnectionActive;
             honoConnectionStatus.setText(R.string.disconnected_from_hono);
             btnToggleMqttConnection.setText(R.string.connect_to_hono);
+            btnSendTestMessage.setEnabled(false);
             Log.d(TAG, "Successfully disconnected");
         } catch (MqttException me) {
             Log.d(TAG, "Failure to disconnect: " + me.toString());
@@ -230,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements
             message = msg;
         }
 
-        // sends the message via the thread.  this will send to all wearables connected.
+        // sends the message via the thread. this will send to all wearables connected.
         // Currently it's assumed the Polar watch is the only connected device.
         public void run() {
 

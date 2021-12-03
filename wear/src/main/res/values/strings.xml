@@ -4,9 +4,13 @@
     This string is used for square devices and overridden by hello_world in
     values-round/strings.xml for round devices.
     -->
-    <string name="plain_zero">0</string>
-    <string name="heartRateSensor_off">Heart Rate Sensor off</string>
-    <string name="no_HeartRateSensor">No Heart Rate Sensor found</string>
-    <string name="receivedStarted">Signal from Mobile App received, recording…</string>
-    <string name="recordingStopped">Click button on the companion mobile app to start Heart Rate sensor.</string>
+    <!--<string name="plain_zero">0</string>-->
+    <string name="heartRateSensor">Heart Rate:</string>
+    <string name="gyroscopeSensor">Gyroscope:</string>
+    <string name="acceleratorSensor">Accelerator:</string>
+    <string name="lightSensor">Light:</string>
+    <string name="status_off">Off</string>
+    <string name="initial_zero_value">0</string>
+    <string name="no_light">NO_SENSOR</string>
+    <string name="clickButtonsToStart">Click buttons on the mobile app to toggle Sensors.</string>
 </resources>

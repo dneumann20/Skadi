@@ -2,6 +2,7 @@ package com.example.skadi;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -15,6 +16,9 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.io.UnsupportedEncodingException;
 
+/**
+ * Helper class to handle the MQTT Connection to Hono
+ */
 public class PahoMqttClient {
 
     private static final String TAG = "PahoMqttClient";
@@ -39,11 +43,6 @@ public class PahoMqttClient {
                 }
             });
         } catch(MqttException me) {
-            System.out.println("reason "+me.getReasonCode());
-            System.out.println("msg "+me.getMessage());
-            System.out.println("loc "+me.getLocalizedMessage());
-            System.out.println("cause "+me.getCause());
-            System.out.println("excep "+me);
             me.printStackTrace();
         }
         return mqttAndroidClient;
@@ -64,6 +63,36 @@ public class PahoMqttClient {
         });
     }
 
+    /*public void subscribe(@NonNull MqttAndroidClient client,
+                          @NonNull final String topic, int qos) throws MqttException {
+        IMqttToken token = client.subscribe(topic, qos);
+        token.setActionCallback(new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken iMqttToken) {
+                Log.d(TAG, "Subscribe Successfully " + topic);
+            }
+            @Override
+            public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
+                Log.e(TAG, "Subscribe Failed " + topic);
+            }
+        });
+    }
+
+    public void unSubscribe(@NonNull MqttAndroidClient client,
+                            @NonNull final String topic) throws MqttException {
+        IMqttToken token = client.unsubscribe(topic);
+        token.setActionCallback(new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken iMqttToken) {
+                Log.d(TAG, "UnSubscribe Successfully " + topic);
+            }
+            @Override
+            public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
+                Log.e(TAG, "UnSubscribe Failed " + topic);
+            }
+        });
+    }*/
+
     @NonNull
     private DisconnectedBufferOptions getDisconnectedBufferOptions() {
         DisconnectedBufferOptions disconnectedBufferOptions = new DisconnectedBufferOptions();
@@ -79,7 +108,7 @@ public class PahoMqttClient {
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setCleanSession(false);
         mqttConnectOptions.setAutomaticReconnect(true);
-        //mqttConnectOptions.setWill(Constants.PUBLISH_TOPIC, "I am going offline".getBytes(), 1, true);
+        //mqttConnectOptions.setWill(lastWill, "I am going offline".getBytes(), 1, true);
         mqttConnectOptions.setUserName(username);
         mqttConnectOptions.setPassword(password.toCharArray());
         return mqttConnectOptions;

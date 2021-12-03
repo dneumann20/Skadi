@@ -1,7 +1,6 @@
 package com.example.skadi;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -10,7 +9,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,64 +22,79 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.wear.ambient.AmbientModeSupport;
 
-public class MainActivity extends Activity implements SensorEventListener, MessageClient.OnMessageReceivedListener {
+public class MainActivity extends FragmentActivity implements SensorEventListener, MessageClient.OnMessageReceivedListener,
+        AmbientModeSupport.AmbientCallbackProvider{
 
     private final static String TAG = "Wear MainActivity";
     String dataPath = "/message_path";
-    private static final String msgStart = "START_RECORDING";
-    private static final String msgStop = "STOP_RECORDING";
-
-    //private Button btnHeartRateRecording;
-    private TextView heartRateView;
-    private TextView recording_on_off;
 
     MessageClient messageClient;
 
+    private AmbientModeSupport.AmbientController ambientController;
+
     private SensorManager sensorManager;
     private Sensor heartRateSensor;
+    private Sensor gyroscopeSensor;
+    private Sensor acceleratorSensor;
+    private Sensor lightSensor;
 
-    private Integer heartRateValue = null;
+    private TextView heartRateValueView;
+    private TextView gyroscopeValueView;
+    private TextView acceleratorValueView;
+    private TextView lightValueView;
 
-    ExecutorService executor = Executors.newFixedThreadPool(1);
+    private String heartRateValue = null;
+    private String gyroscopeValues = null;
+    private String acceleratorValues = null;
+    private String lightValue = null;
+
+    private String oldGyroscopeValues = null;
+    private String oldAcceleratorValues = null;
+
+    private boolean heartRateSensorActivated = false;
+    private boolean gyroscopeSensorActivated = false;
+    private boolean acceleratorSensorActivated = false;
+    private boolean lightSensorActivated = false;
+
+    //ExecutorService executor = Executors.newFixedThreadPool(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
-        setContentView(view);
+        setContentView(R.layout.activity_main);
 
-        /*
-          Set Button;
-          The button is for debugging purposes and shows current data in the textView below
-          is either toggled manually or by signal from the mobile phone
-         */
-        //btnHeartRateRecording = findViewById(R.id.btnHeartRateRecording);
-        //btnHeartRateRecording.setOnClickListener(toggleButton);
-
-        //Set TextViews
-        heartRateView = findViewById(R.id.heartRateView);
-        recording_on_off = findViewById(R.id.messageTest);
-
-        //Set HeartRate sensor
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+
+        ambientController = AmbientModeSupport.attach(this);
+
+        //Set sensors
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        acceleratorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+        if (lightSensor == null) {
+            Log.d(TAG, "Warning: no heartRateSensor");
+            lightValueView.setText(R.string.no_light);
+        }
+
+        //Set sensor value views
+        heartRateValueView = findViewById(R.id.heartRateSensorValueView);
+        gyroscopeValueView = findViewById(R.id.gyroscopeSensorValueView);
+        acceleratorValueView = findViewById(R.id.acceleratorSensorValueView);
+        lightValueView = findViewById(R.id.lightSensorValueView);
 
         //Set Message client
         messageClient = Wearable.getMessageClient(getApplicationContext());
-
-        // Since we assume a smartwatch with heart rate sensor is used it shouldn't matter, but just in case
-        if (heartRateSensor == null) {
-            Log.d(TAG, "Warning: no heartRateSensor");
-            heartRateView.setText(R.string.no_HeartRateSensor);
-        }
 
         // Check if App has access on the heart rate sensor, if not request it
         if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
@@ -89,52 +102,84 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
         }
     }
 
-    private void activateSensor() {
-        if (sensorManager != null) {
-            sensorManager.registerListener((SensorEventListener) this, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
-            heartRateValue = 0;
-            heartRateView.setText(String.valueOf(heartRateValue));
-        }
-    }
 
-    private void deactivateSensor() {
-        if (sensorManager != null) {
-            sensorManager.unregisterListener((SensorEventListener) this, heartRateSensor);
-            heartRateValue = null;
-            heartRateView.setText(R.string.heartRateSensor_off);
-        }
-    }
 
+    /**
+     * Everytime a sensor value changes, send it via message and update the corresponding view
+     * @param sensorEvent
+     */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE) {
-            heartRateValue = (int)sensorEvent.values[0];
-            heartRateView.setText(String.format(""+heartRateValue));
+            heartRateValue = ""+(int)sensorEvent.values[0];
+            //Set first character in message differently to differentiate the sensor values
+            new SendThread(dataPath, "h"+heartRateValue).start();
 
-            //Send a message back.
-            String msgUpdatedHeartRateValue = heartRateValue.toString();
-            executor = Executors.newFixedThreadPool(1);
-            executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
+            heartRateValueView.setText(heartRateValue);
+            //executor = Executors.newFixedThreadPool(1);
+            //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
-    }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            /*String x = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[0]);
+            String y = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[1]);
+            String z = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[2]);
 
-    // auto override
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-        Log.d(TAG, "onAccuracyChanged - accuracy: " + i);
-    }
+            gyroscopeValues = x+","+y+","+z;*/
+            gyroscopeValues = ""+sensorEvent.values[0];
 
-    // auto override
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Wearable.getMessageClient(this).addListener(this);
-    }
-    // auto override
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Wearable.getMessageClient(this).removeListener(this);
+            if(oldGyroscopeValues == null) {
+                new SendThread(dataPath, "g"+gyroscopeValues).start();
+                oldGyroscopeValues = gyroscopeValues;
+            } else {
+                // Only send new value on a more significant change to prevent massive flood of data
+                Log.d("TEST: ", ""+gyroscopeValues);
+                float oldgyro = Float.parseFloat(oldGyroscopeValues);
+                Log.d("TEST2: ", "xdddsad");
+                float gyro = Float.parseFloat(gyroscopeValues);
+                float diff = oldgyro - gyro;
+                Log.d("TEST3: ", ""+diff);
+                if(Math.abs(diff) > 0.1) {
+                    Log.d("TEST4: ", ""+diff);
+                    new SendThread(dataPath, "g"+gyroscopeValues).start();
+                    oldGyroscopeValues = gyroscopeValues;
+                }
+            }
+            gyroscopeValueView.setText(gyroscopeValues);
+
+            //executor = Executors.newFixedThreadPool(1);
+            //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            String x = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[0]);
+            /*String y = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[1]);
+            String z = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[2]);
+            acceleratorValues = x+","+y+","+z;*/
+            acceleratorValues = x;
+
+            if(oldAcceleratorValues == null) {
+                new SendThread(dataPath, "a"+acceleratorValues).start();
+                oldAcceleratorValues = acceleratorValues;
+                acceleratorValueView.setText(acceleratorValues);
+            } else {
+                // Only send value on a more significant change to prevent massive flood of data
+                if(Math.abs(Float.parseFloat(oldAcceleratorValues) - Float.parseFloat(acceleratorValues))
+                        > 0.1) {
+                    new SendThread(dataPath, "a"+acceleratorValues).start();
+                    oldAcceleratorValues = acceleratorValues;
+                    acceleratorValueView.setText(acceleratorValues);
+                }
+            }
+            //executor = Executors.newFixedThreadPool(1);
+            //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_LIGHT) {
+            lightValue = ""+sensorEvent.values[0];
+            new SendThread(dataPath, "l"+lightValue).start();
+
+            lightValueView.setText(lightValue);
+            //executor = Executors.newFixedThreadPool(1);
+            //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
+        }
     }
 
     /**
@@ -143,26 +188,54 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
      */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
-        String message =new String(messageEvent.getData());
-        if(message.equals(msgStart)) {
-            //Activate sensor on receiving
-            activateSensor();
-            Log.v(TAG, "Wear activity received start message: " + message);
-
-            heartRateView.setText(R.string.plain_zero);
-            recording_on_off.setText(R.string.receivedStarted);
-        }
-        else if (message.equals(msgStop)) {
-            deactivateSensor();
-            //executor.shutdownNow();
-            Log.v(TAG, "Wear activity received stop message: " + message);
-
-            heartRateValue = null;
-            heartRateView.setText(R.string.heartRateSensor_off);
-            recording_on_off.setText(R.string.recordingStopped);
-        }
-        else {
-            Log.e("ERROR: ",message);
+        String message = new String(messageEvent.getData());
+        switch(message) {
+            case "heartRate":
+                //revert boolean value
+                this.heartRateSensorActivated = !this.heartRateSensorActivated;
+                if(heartRateSensorActivated) {
+                    sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                    heartRateValueView.setText(R.string.initial_zero_value);
+                } else {
+                    sensorManager.unregisterListener(this, heartRateSensor);
+                    heartRateValueView.setText(R.string.status_off);
+                }
+                break;
+            case "gyroscope":
+                //revert boolean value
+                this.gyroscopeSensorActivated = !this.gyroscopeSensorActivated;
+                if(gyroscopeSensorActivated) {
+                    sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                    gyroscopeValueView.setText(R.string.initial_zero_value);
+                } else {
+                    sensorManager.unregisterListener(this, gyroscopeSensor);
+                    gyroscopeValueView.setText(R.string.status_off);
+                }
+                break;
+            case "accelerator":
+                //revert boolean value
+                this.acceleratorSensorActivated = !this.acceleratorSensorActivated;
+                if(acceleratorSensorActivated) {
+                    sensorManager.registerListener(this, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                    acceleratorValueView.setText(R.string.initial_zero_value);
+                } else {
+                    sensorManager.unregisterListener(this, acceleratorSensor);
+                    acceleratorValueView.setText(R.string.status_off);
+                }
+                break;
+            case "light":
+                //revert boolean value
+                this.lightSensorActivated = !this.lightSensorActivated;
+                if(lightSensorActivated) {
+                    sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                    lightValueView.setText(R.string.initial_zero_value);
+                } else {
+                    sensorManager.unregisterListener(this, lightSensor);
+                    lightValueView.setText(R.string.status_off);
+                }
+                break;
+            default:
+                Log.e(TAG, "Error occurred while receiving message: " + message);
         }
     }
 
@@ -215,5 +288,64 @@ public class MainActivity extends Activity implements SensorEventListener, Messa
             }
         }
     }
+
+    // TODO reset method
+    public void resetToDefaultState() {
+        Log.d(TAG, "RESET TO DEFAULT");
+        sensorManager.unregisterListener(this, heartRateSensor);
+        sensorManager.unregisterListener(this, gyroscopeSensor);
+        sensorManager.unregisterListener(this, acceleratorSensor);
+        sensorManager.unregisterListener(this, lightSensor);
+
+        heartRateValueView.setText(R.string.status_off);
+        gyroscopeValueView.setText(R.string.status_off);
+        acceleratorValueView.setText(R.string.status_off);
+        lightValueView.setText(R.string.status_off);
+
+    }
+
+    // auto override
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+        Log.d(TAG, "onAccuracyChanged - accuracy: " + i);
+    }
+
+    // auto override
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Wearable.getMessageClient(this).addListener(this);
+    }
+    // auto override
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Wearable.getMessageClient(this).removeListener(this);
+        resetToDefaultState();
+    }
+    // auto override
+    @Override
+    public AmbientModeSupport.AmbientCallback getAmbientCallback() {
+        return new AmbientCallback();
+    }
+
+    private static class AmbientCallback extends AmbientModeSupport.AmbientCallback {
+        @Override
+        public void onEnterAmbient(Bundle ambientDetails) {
+            // Handle entering ambient mode
+        }
+
+        @Override
+        public void onExitAmbient() {
+            // Handle exiting ambient mode
+        }
+
+        @Override
+        public void onUpdateAmbient() {
+            // Update the content
+        }
+    }
+
+
 
 }
