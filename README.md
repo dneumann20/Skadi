@@ -13,18 +13,18 @@ Open the SDK, connect each device. When using Android Studio, use the dropdown w
 
 ## Smartwatch App
 
-# MainActivity
+### MainActivity
 
-# SendThread
+### SendThread
 
-# AmbientCallback
+### AmbientCallback
 
 
 ## Mobile Phone App
 
-# MainActivity
+### MainActivity
 
-# PahoMQTTClient
+### PahoMQTTClient
 
 ## Trouble shooting
 
