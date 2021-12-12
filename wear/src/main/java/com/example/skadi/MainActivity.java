@@ -22,7 +22,6 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import androidx.core.app.ActivityCompat;
@@ -37,8 +36,6 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     MessageClient messageClient;
 
-    private AmbientModeSupport.AmbientController ambientController;
-
     private SensorManager sensorManager;
     private Sensor heartRateSensor;
     private Sensor gyroscopeSensor;
@@ -50,20 +47,18 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     private TextView acceleratorValueView;
     private TextView lightValueView;
 
-    private String heartRateValue = null;
-    private String gyroscopeValues = null;
-    private String acceleratorValues = null;
-    private String lightValue = null;
+    private String heartRateValue = 0+"";
+    private String gyroscopeValue_x = 0+"";
+    private String acceleratorValue_x = 0+"";
+    private String lightValue = 0+"";
 
-    private String oldGyroscopeValues = null;
-    private String oldAcceleratorValues = null;
+    private String oldGyroscopeValue_x = 0+"";
+    private String oldAcceleratorValue_x = 0+"";
 
     private boolean heartRateSensorActivated = false;
     private boolean gyroscopeSensorActivated = false;
     private boolean acceleratorSensorActivated = false;
     private boolean lightSensorActivated = false;
-
-    //ExecutorService executor = Executors.newFixedThreadPool(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,18 +69,14 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 
-        ambientController = AmbientModeSupport.attach(this);
+        //Make the app be permanently in the foreground
+        AmbientModeSupport.AmbientController ambientController = AmbientModeSupport.attach(this);
 
         //Set sensors
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         acceleratorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-
-        if (lightSensor == null) {
-            Log.d(TAG, "Warning: no heartRateSensor");
-            lightValueView.setText(R.string.no_light);
-        }
 
         //Set sensor value views
         heartRateValueView = findViewById(R.id.heartRateSensorValueView);
@@ -96,7 +87,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         //Set Message client
         messageClient = Wearable.getMessageClient(getApplicationContext());
 
-        // Check if App has access on the heart rate sensor, if not request it
+        // Check if App has access on the sensors, if not request it
         if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions( this, new String[] {  Manifest.permission.BODY_SENSORS  },2);
         }
@@ -106,70 +97,42 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     /**
      * Everytime a sensor value changes, send it via message and update the corresponding view
+     * Gyroscope and Accelerator "constantly" change their values, so the difference between new and old values are
+     * calculated and will be only updated on a significant change. Min difference was set on 1 for
+     * gyroscope and 2 for accelerator for testing reasons.
+     *
+     * To differentiate the data of according sensors, the message is sent with a prefix character that is
+     * removed in the mobile phone app again
      * @param sensorEvent
      */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE) {
             heartRateValue = ""+(int)sensorEvent.values[0];
-            //Set first character in message differently to differentiate the sensor values
             new SendThread(dataPath, "h"+heartRateValue).start();
 
             heartRateValueView.setText(heartRateValue);
-            //executor = Executors.newFixedThreadPool(1);
             //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
         else if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            /*String x = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[0]);
-            String y = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[1]);
-            String z = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[2]);
+            gyroscopeValue_x = ""+sensorEvent.values[0];
 
-            gyroscopeValues = x+","+y+","+z;*/
-            gyroscopeValues = ""+sensorEvent.values[0];
-
-            if(oldGyroscopeValues == null) {
-                new SendThread(dataPath, "g"+gyroscopeValues).start();
-                oldGyroscopeValues = gyroscopeValues;
-            } else {
-                // Only send new value on a more significant change to prevent massive flood of data
-                Log.d("TEST: ", ""+gyroscopeValues);
-                float oldgyro = Float.parseFloat(oldGyroscopeValues);
-                Log.d("TEST2: ", "xdddsad");
-                float gyro = Float.parseFloat(gyroscopeValues);
-                float diff = oldgyro - gyro;
-                Log.d("TEST3: ", ""+diff);
-                if(Math.abs(diff) > 0.1) {
-                    Log.d("TEST4: ", ""+diff);
-                    new SendThread(dataPath, "g"+gyroscopeValues).start();
-                    oldGyroscopeValues = gyroscopeValues;
-                }
+            if(Math.abs(Float.parseFloat(oldGyroscopeValue_x) - Float.parseFloat(gyroscopeValue_x)) > 1) {
+                new SendThread(dataPath, "g"+ gyroscopeValue_x).start();
+                oldGyroscopeValue_x = gyroscopeValue_x;
+                gyroscopeValueView.setText(gyroscopeValue_x);
             }
-            gyroscopeValueView.setText(gyroscopeValues);
-
-            //executor = Executors.newFixedThreadPool(1);
             //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
         else if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            String x = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[0]);
-            /*String y = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[1]);
-            String z = String.format(Locale.getDefault(),"%.2f", sensorEvent.values[2]);
-            acceleratorValues = x+","+y+","+z;*/
-            acceleratorValues = x;
+            acceleratorValue_x = ""+sensorEvent.values[0];
 
-            if(oldAcceleratorValues == null) {
-                new SendThread(dataPath, "a"+acceleratorValues).start();
-                oldAcceleratorValues = acceleratorValues;
-                acceleratorValueView.setText(acceleratorValues);
-            } else {
-                // Only send value on a more significant change to prevent massive flood of data
-                if(Math.abs(Float.parseFloat(oldAcceleratorValues) - Float.parseFloat(acceleratorValues))
-                        > 0.1) {
-                    new SendThread(dataPath, "a"+acceleratorValues).start();
-                    oldAcceleratorValues = acceleratorValues;
-                    acceleratorValueView.setText(acceleratorValues);
-                }
+            if(Math.abs(Float.parseFloat(oldAcceleratorValue_x) - Float.parseFloat(acceleratorValue_x))
+                    > 2) {
+                new SendThread(dataPath, "a"+ acceleratorValue_x).start();
+                oldAcceleratorValue_x = acceleratorValue_x;
+                acceleratorValueView.setText(acceleratorValue_x);
             }
-            //executor = Executors.newFixedThreadPool(1);
             //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
         else if (sensorEvent.sensor.getType() == Sensor.TYPE_LIGHT) {
@@ -177,14 +140,13 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
             new SendThread(dataPath, "l"+lightValue).start();
 
             lightValueView.setText(lightValue);
-            //executor = Executors.newFixedThreadPool(1);
             //executor.submit(new SendThread(dataPath, msgUpdatedHeartRateValue));
         }
     }
 
     /**
-     * Starts/Stops the transmission of heart rate sensor data
-     * @param messageEvent : Message to start or stop the sensor and data recording
+     * Starts/Stops the transmission of the sensor data
+     * @param messageEvent : Message to start or stop the according sensor
      */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
@@ -195,7 +157,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 this.heartRateSensorActivated = !this.heartRateSensorActivated;
                 if(heartRateSensorActivated) {
                     sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
-                    heartRateValueView.setText(R.string.initial_zero_value);
+                    heartRateValueView.setText(heartRateValue);
                 } else {
                     sensorManager.unregisterListener(this, heartRateSensor);
                     heartRateValueView.setText(R.string.status_off);
@@ -206,7 +168,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 this.gyroscopeSensorActivated = !this.gyroscopeSensorActivated;
                 if(gyroscopeSensorActivated) {
                     sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
-                    gyroscopeValueView.setText(R.string.initial_zero_value);
+                    gyroscopeValueView.setText(gyroscopeValue_x);
                 } else {
                     sensorManager.unregisterListener(this, gyroscopeSensor);
                     gyroscopeValueView.setText(R.string.status_off);
@@ -217,7 +179,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 this.acceleratorSensorActivated = !this.acceleratorSensorActivated;
                 if(acceleratorSensorActivated) {
                     sensorManager.registerListener(this, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
-                    acceleratorValueView.setText(R.string.initial_zero_value);
+                    acceleratorValueView.setText(acceleratorValue_x);
                 } else {
                     sensorManager.unregisterListener(this, acceleratorSensor);
                     acceleratorValueView.setText(R.string.status_off);
@@ -228,19 +190,21 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 this.lightSensorActivated = !this.lightSensorActivated;
                 if(lightSensorActivated) {
                     sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
-                    lightValueView.setText(R.string.initial_zero_value);
+                    lightValueView.setText(lightValue);
                 } else {
                     sensorManager.unregisterListener(this, lightSensor);
                     lightValueView.setText(R.string.status_off);
                 }
+                break;
+            case "reset":
+                resetToDefaultState();
                 break;
             default:
                 Log.e(TAG, "Error occurred while receiving message: " + message);
         }
     }
 
-    // Send the Data back to Mobile Phone
-    // TODO restructure to function?
+    // Send the Data to Mobile Phone
     class SendThread extends Thread {
         String path;
         String message;
@@ -252,7 +216,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         }
 
         public void run() {
-            //first get all the nodes, ie connected wearable devices.
+            //first get all the nodes, in this case assuming there is only one paired mobile phone
             Task<List<Node>> nodeListTask =
                     Wearable.getNodeClient(getApplicationContext()).getConnectedNodes();
             try {
@@ -269,7 +233,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                         // Block on a task and get the result synchronously (because this is on a background
                         // thread).
                         Integer result = Tasks.await(sendMessageTask);
-                        Log.v(TAG, "SendThread: message send to " + node.getDisplayName());
+                        Log.v(TAG, "SendThread "+result+": message "+message+" sent to " + node.getDisplayName());
 
                     } catch (ExecutionException exception) {
                         Log.e(TAG, "Task failed: " + exception);
@@ -289,8 +253,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         }
     }
 
-    // TODO reset method
-    public void resetToDefaultState() {
+    private void resetToDefaultState() {
         Log.d(TAG, "RESET TO DEFAULT");
         sensorManager.unregisterListener(this, heartRateSensor);
         sensorManager.unregisterListener(this, gyroscopeSensor);
@@ -301,6 +264,11 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         gyroscopeValueView.setText(R.string.status_off);
         acceleratorValueView.setText(R.string.status_off);
         lightValueView.setText(R.string.status_off);
+
+        this.heartRateSensorActivated = false;
+        this.gyroscopeSensorActivated = false;
+        this.acceleratorSensorActivated = false;
+        this.lightSensorActivated = false;
 
     }
 
@@ -316,13 +284,22 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         super.onResume();
         Wearable.getMessageClient(this).addListener(this);
     }
-    // auto override
+    // Reset when app is inactive
     @Override
     protected void onPause() {
         super.onPause();
         Wearable.getMessageClient(this).removeListener(this);
         resetToDefaultState();
     }
+
+    // Reset when app is closed or goes in the background
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Wearable.getMessageClient(this).removeListener(this);
+        resetToDefaultState();
+    }
+
     // auto override
     @Override
     public AmbientModeSupport.AmbientCallback getAmbientCallback() {
@@ -345,7 +322,6 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
             // Update the content
         }
     }
-
 
 
 }

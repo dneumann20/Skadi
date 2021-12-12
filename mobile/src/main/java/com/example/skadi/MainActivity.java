@@ -16,9 +16,9 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -41,11 +41,12 @@ public class MainActivity extends AppCompatActivity implements
     Button btnToggleGyroscopeSensor;
     Button btnToggleAcceleratorSensor;
     Button btnToggleLightSensor;
+    Button btnResetSensors;
 
-    boolean heartRateSensorActive = false;
-    boolean gyroscopeSensorActive = false;
-    boolean acceleratorSensorActive = false;
-    boolean lightSensorActive = false;
+    boolean heartRateSensorActivated = false;
+    boolean gyroscopeSensorActivated = false;
+    boolean acceleratorSensorActivated = false;
+    boolean lightSensorActivated = false;
 
     TextView heartRateValueView ;
     TextView gyroscopeValueView;
@@ -55,12 +56,9 @@ public class MainActivity extends AppCompatActivity implements
     TextView honoConnectionStatus;
 
     // TODO remove after testing
-    Button btnSendTestMessage;
+
 
     boolean honoConnectionActive = false;
-
-    private static final String msgStart = "START_RECORDING";
-    private static final String msgStop = "STOP_RECORDING";
 
     /**
      * Hono related variables
@@ -81,7 +79,6 @@ public class MainActivity extends AppCompatActivity implements
 
     String topic =  "event"+"/"+TENANT_ID+"/"+CLIENT_DEVICE_ID+"/";
 
-    MemoryPersistence persistence = new MemoryPersistence();
     int qos = 1;
 
     @Override
@@ -89,18 +86,14 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Set text views showing sensor values, default value: "Sensor off"
+        // Set text views
         heartRateValueView = findViewById(R.id.heartRateSensorValueView);
         gyroscopeValueView = findViewById(R.id.gyroscopeSensorValueView);
         acceleratorValueView = findViewById(R.id.acceleratorSensorValueView);
         lightValueView = findViewById(R.id.lightSensorValueView);
-
         honoConnectionStatus = findViewById(R.id.honoConnectionStatus); // Shows whether connected to Hono
 
         // Set buttons
-        /*btnToggleSensor = findViewById(R.id.start_data_collection);
-        btnToggleSensor.setOnClickListener(this::toggleDataCollection);*/
-
         btnToggleHeartRateSensor = findViewById(R.id.btnHeartRateSensor);
         btnToggleHeartRateSensor.setOnClickListener(this);
         btnToggleGyroscopeSensor = findViewById(R.id.btnGyroscopeSensor);
@@ -110,10 +103,13 @@ public class MainActivity extends AppCompatActivity implements
         btnToggleLightSensor = findViewById(R.id.btnLightSensor);
         btnToggleLightSensor.setOnClickListener(this);
 
+        btnResetSensors = findViewById(R.id.resetSensors);
+        btnResetSensors.setOnClickListener(this);
+
         btnToggleMqttConnection = findViewById(R.id.toggle_hono_connection);
         btnToggleMqttConnection.setOnClickListener(v -> {
             try {
-                toggleHonoConnection(v);
+                toggleHonoConnection();
             }
             catch (MqttException | UnsupportedEncodingException e){
                 Log.d(TAG, "Connect via Button Click "+e.toString());
@@ -135,8 +131,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * Receives Messages from Polar watch and displays sensor value on screen
-     * TODO WIP: Sends the data to Hono
+     * Receives Messages from Polar watch, sends to Hono and displays sensor value on screen
      */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
@@ -145,39 +140,38 @@ public class MainActivity extends AppCompatActivity implements
         String message = new String(messageEvent.getData());
         Log.d(TAG, "Main activity received message: " + message);
         Log.d(TAG, "Received data: " + message);
-        //Check the message prefix which sensor sends the current data
 
-        String newValue = message.substring(1);
+        try {
+            // New string without prefix
+            String newValue = message.substring(1);
 
-        //data comes from heart rate sensor
-        if(message.charAt(0) == 'h') {
-            message = message.substring(1);
-            // Display value without prefix
-            heartRateValueView.setText(newValue);
-        }
-        //data comes from gyroscope
-        if(message.charAt(0) == 'g') {
-            gyroscopeValueView.setText(newValue);
-        }
-        //data comes from accelerator
-        if(message.charAt(0) == 'a') {
-            acceleratorValueView.setText(newValue);
-        }
-        //data comes from light sensor
-        if(message.charAt(0) == 'l') {
-            lightValueView.setText(newValue);
-        }
+            //Check the message prefix which sensor sends the current data
+            //data comes from heart rate sensor
+            if(message.charAt(0) == 'h') {
+                pahoMqttClient.publishMessage(client, newValue, qos, topic+"heartRate");
+                heartRateValueView.setText(newValue);
+            }
+            //data comes from gyroscope
+            if(message.charAt(0) == 'g') {
+                pahoMqttClient.publishMessage(client, newValue, qos, topic+"gyroscope");
+                gyroscopeValueView.setText(newValue);
+            }
+            //data comes from accelerator
+            if(message.charAt(0) == 'a') {
+                pahoMqttClient.publishMessage(client, newValue, qos, topic+"accelerator");
+                acceleratorValueView.setText(newValue);
+            }
+            //data comes from light sensor
+            if(message.charAt(0) == 'l') {
+                pahoMqttClient.publishMessage(client, newValue, qos, topic+"light");
+                lightValueView.setText(newValue);
+            }
 
-        //TODO forward via MQTT Client
-        /*try {
-            pahoMqttClient.publishMessage(client, newValue, qos, topic+"heartRate");
-
-            Log.i("MQTT", "Message published");
-        } catch (MqttException | MqttPersistenceException e) {
-            // TODO Auto-generated catch block
+            Log.d("MQTT", "Message published: "+newValue);
+        } catch (MqttException | UnsupportedEncodingException e) {
+            Log.d("MQTT", "Message error sending message");
             e.printStackTrace();
-        }*/
-
+        }
     }
 
     @Override
@@ -185,8 +179,8 @@ public class MainActivity extends AppCompatActivity implements
         // toggle HeartRateSensor
         if(v == btnToggleHeartRateSensor) {
             //revert boolean value
-            heartRateSensorActive = !heartRateSensorActive;
-            if(heartRateSensorActive) {
+            heartRateSensorActivated = !heartRateSensorActivated;
+            if(heartRateSensorActivated) {
                 //Initial value after activation is 0 until value gets updated by received value
                 heartRateValueView.setText(R.string.plain_zero);
                 btnToggleHeartRateSensor.setText(R.string.stop);
@@ -201,8 +195,8 @@ public class MainActivity extends AppCompatActivity implements
         // toggle Gyroscope Sensor
         else if(v == btnToggleGyroscopeSensor) {
             //revert boolean value
-            gyroscopeSensorActive = !gyroscopeSensorActive;
-            if(gyroscopeSensorActive) {
+            gyroscopeSensorActivated = !gyroscopeSensorActivated;
+            if(gyroscopeSensorActivated) {
                 //Initial value after activation is 0 until value gets updated by received value
                 gyroscopeValueView.setText(R.string.plain_zero);
                 btnToggleGyroscopeSensor.setText(R.string.stop);
@@ -216,8 +210,8 @@ public class MainActivity extends AppCompatActivity implements
         // toggle Accelerator Sensor
         else if(v == btnToggleAcceleratorSensor) {
             //revert boolean value
-            acceleratorSensorActive = !acceleratorSensorActive;
-            if(acceleratorSensorActive) {
+            acceleratorSensorActivated = !acceleratorSensorActivated;
+            if(acceleratorSensorActivated) {
                 //Initial value after activation is 0 until value gets updated by received value
                 acceleratorValueView.setText(R.string.plain_zero);
                 btnToggleAcceleratorSensor.setText(R.string.stop);
@@ -228,11 +222,11 @@ public class MainActivity extends AppCompatActivity implements
             // Send message to toggle Sensor on watch
             new SendThread(dataPath, "accelerator").start();
         }
-        // toggle LightSensor
+        // toggle Light Sensor
         else if(v == btnToggleLightSensor) {
             //revert boolean value
-            lightSensorActive = !lightSensorActive;
-            if(lightSensorActive) {
+            lightSensorActivated = !lightSensorActivated;
+            if(lightSensorActivated) {
                 //Initial value after activation is 0 until value gets updated by received sensor data
                 lightValueView.setText(R.string.plain_zero);
                 btnToggleLightSensor.setText(R.string.stop);
@@ -243,9 +237,16 @@ public class MainActivity extends AppCompatActivity implements
             // Send message to toggle Sensor on watch
             new SendThread(dataPath, "light").start();
         }
+        // Reset sensors
+        else if(v == btnResetSensors) {
+            // Send message to reset all sensors
+            new SendThread(dataPath, "reset").start();
+
+            resetButtonsAndTextFields();
+        }
     }
 
-    private void toggleHonoConnection(View v) throws MqttException, UnsupportedEncodingException {
+    private void toggleHonoConnection() throws MqttException, UnsupportedEncodingException {
         if(!this.honoConnectionActive) {
             connectMQTTClient();
         }
@@ -254,51 +255,94 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    private void resetButtonsAndTextFields() {
+        Log.d(TAG, "RESET TO DEFAULT");
+
+        btnToggleHeartRateSensor.setText(R.string.start);
+        btnToggleGyroscopeSensor.setText(R.string.start);
+        btnToggleAcceleratorSensor.setText(R.string.start);
+        btnToggleLightSensor.setText(R.string.start);
+
+        heartRateValueView.setText(R.string.sensorOff);
+        gyroscopeValueView.setText(R.string.sensorOff);
+        acceleratorValueView.setText(R.string.sensorOff);
+        lightValueView.setText(R.string.sensorOff);
+
+        this.heartRateSensorActivated = false;
+        this.gyroscopeSensorActivated = false;
+        this.acceleratorSensorActivated = false;
+        this.lightSensorActivated = false;
+    }
+
     /**
-     * Trying connect to Hono, make sure that the receiver script is running!
+     * Trying connect to Hono, make sure that the smadis receiver script is running!
+     *
+     * Connection is handled here instead to make sure that all the buttons and texts only update on a successful
+     * connection try
      */
     private void connectMQTTClient() {
 
         try {
-            this.client = pahoMqttClient.getMqttClient(getApplicationContext(),
-                    MQTT_ADAPTER_IP_URI, CLIENT_DEVICE_ID, USERNAME, PASSWORD);
+            this.client = new MqttAndroidClient(getApplicationContext(), MQTT_ADAPTER_IP_URI, CLIENT_DEVICE_ID);
 
-            honoConnectionActive = !honoConnectionActive;
-            honoConnectionStatus.setText(R.string.connected_to_hono);
-            btnToggleMqttConnection.setText(R.string.disconnect_from_hono);
-            btnSendTestMessage.setEnabled(true);
+            IMqttToken token = this.client.connect(pahoMqttClient.getMqttConnectionOption(USERNAME, PASSWORD));
+            token.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    client.setBufferOpts(pahoMqttClient.getDisconnectedBufferOptions());
+                    Log.d(TAG, "Successfully connected");
+
+                    honoConnectionActive = true;
+                    honoConnectionStatus.setText(R.string.connected_to_hono);
+                    btnToggleMqttConnection.setText(R.string.disconnect_from_hono);
+
+                    btnToggleHeartRateSensor.setEnabled(true);
+                    btnToggleGyroscopeSensor.setEnabled(true);
+                    btnToggleAcceleratorSensor.setEnabled(true);
+                    btnToggleLightSensor.setEnabled(true);
+                }
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.d(TAG, "Failure " + exception.toString());
+                }
+            });
         } catch (MqttException e) {
-            Log.d(TAG, "Failure to connect."+e.toString());
+                e.printStackTrace();
         }
     }
-
-    // TODO remove after test
-    /*public void sendTestMessage(View v) {
-        if(client.isConnected()){
-            Log.d(TAG, "Client still connected");
-                try {
-                String message = "connectSuccess";
-                pahoMqttClient.publishMessage(this.client, message, qos, topic+"sendTestMessage");
-
-                testMessageToHono.setText(R.string.hono_message_test_success);
-            } catch (MqttException | UnsupportedEncodingException e){
-                Log.d(TAG, "Failure to send: "+e.toString());
-                e.printStackTrace();
-            }
-        }
-    }*/
 
     /**
      * Trying disconnect from MQTT Server
      */
     private void disconnectMQTTClient(@NonNull MqttAndroidClient client) {
         try {
-            pahoMqttClient.disconnect(client);
-            honoConnectionActive = !honoConnectionActive;
-            honoConnectionStatus.setText(R.string.disconnected_from_hono);
-            btnToggleMqttConnection.setText(R.string.connect_to_hono);
-            btnSendTestMessage.setEnabled(false);
-            Log.d(TAG, "Successfully disconnected");
+
+            IMqttToken mqttToken = client.disconnect();
+            mqttToken.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken iMqttToken) {
+                    Log.d(TAG, "Successfully disconnected");
+
+                    //Deactivate sensors when disconnected.
+                    new SendThread(dataPath, "reset").start();
+
+                    honoConnectionActive = false;
+                    honoConnectionStatus.setText(R.string.disconnected_from_hono);
+                    btnToggleMqttConnection.setText(R.string.connect_to_hono);
+
+                    btnToggleHeartRateSensor.setEnabled(false);
+                    btnToggleGyroscopeSensor.setEnabled(false);
+                    btnToggleAcceleratorSensor.setEnabled(false);
+                    btnToggleLightSensor.setEnabled(false);
+
+                    resetButtonsAndTextFields();
+                }
+                @Override
+                public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
+                    Log.d(TAG, "Failed to disconnected " + throwable.toString());
+                }
+            });
+
         } catch (MqttException me) {
             Log.d(TAG, "Failure to disconnect: " + me.toString());
         }

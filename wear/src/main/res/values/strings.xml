@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Skadi</string>
     <!--
     This string is used for square devices and overridden by hello_world in
@@ -10,7 +10,5 @@
     <string name="acceleratorSensor">Accelerator:</string>
     <string name="lightSensor">Light:</string>
     <string name="status_off">Off</string>
-    <string name="initial_zero_value">0</string>
-    <string name="no_light">NO_SENSOR</string>
     <string name="clickButtonsToStart">Click buttons on the mobile app to toggle Sensors.</string>
 </resources>
