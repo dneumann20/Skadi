@@ -1,23 +1,34 @@
-# Skadi
+# Polar M600 Sensor Data App
 
-## Build Android Virtual Machine
+This app consists of 2 different apps used by the Polar M600 smartwatch and a mobile phone, each of them will be referred here as companion apps.
 
-Follow Tutorial here:
+## Prerequisites
+* ADB Manager
+* Android SDK / JDK
+* Android Studio or other preferred SDK
 
-https://github.com/google/android-emulator-container-scripts
+## Setup
 
-### Notes
+Open the SDK, connect each device. When using Android Studio, use the dropdown with the options "wear" and "mobile" and choose the right device name to compile the app on the respective device type.
 
-Used Emulator and Image für Virtual Android Env
+## Smartwatch App
 
-* SYSIMG Android 86_64 - Version 30-x.zip
-* EMU stable Emulator-30-x.zip
+# MainActivity
 
-After downloading each, run this command:
+# SendThread
 
-``emu-docker create <emulator-zip> <system-image-zip>``
+# AmbientCallback
 
-Afterwards, build with:
 
-``emu-docker build ./src/``
+## Mobile Phone App
 
+# MainActivity
+
+# PahoMQTTClient
+
+## Trouble shooting
+
+* No popup for giving permission over body sensors
+adb devices (WIP) 
+
+* Connection to Hono is not working on the first try
