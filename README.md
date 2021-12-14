@@ -3,11 +3,14 @@
 This app consists of 2 different apps used by the Polar M600 smartwatch and a mobile phone, each of them will be referred here as companion apps.
 
 ## Prerequisites
-* ADB Manager
-* Android SDK / JDK
-* Android Studio or other preferred SDK
+* Linux OS
+* Android JDK
+* Android Studio or other preferred IDE (includes Android SDK and adb Manager)
+* Wear OS Android app to pair smartphone and smartwatch
+* Debugging activated in both devices
 
 ## Setup
+The companion apps assume, that both 
 
 Open the SDK, connect each device. When using Android Studio, use the dropdown with the options "wear" and "mobile" and choose the right device name to compile the app on the respective device type.
 
@@ -28,7 +31,11 @@ Open the SDK, connect each device. When using Android Studio, use the dropdown w
 
 ## Trouble shooting
 
-* No popup for giving permission over body sensors
-adb devices (WIP) 
+### Sensors are not reacting on Button click
+Make sure that Bluetooth is activated on both devices during the use.
 
-* Connection to Hono is not working on the first try
+### No popup for giving permission over body sensors
+adb devices permission (WIP)
+
+### Connection to Hono is not working on the first try
+Sadly it's a known issue from the MQttPahoClient library, it usually works on the 2nd try the latest.
