@@ -8,22 +8,26 @@ The Skadi project consists of a wear app and a mobile app used by the Polar M600
 * Android JDK
 * Android Studio or other preferred IDE (includes Android SDK and adb Manager)
 * Wear OS Android app to pair smartphone and smartwatch
-* USB Debugging activated in both devices
+* USB debugging in mobile phone activated, ADB debugging in smartphone activated
 
 ## Setup
 
 ### SMADIS deployment
-Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After succesful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a tenant which will receive the incoming data. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mainactivity-1).
+Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a tenant which will receive the incoming data. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mainactivity-1).
 
 ### Wear OS
 **NOTE**: The companion apps assume, that the concerning devices are already paired beforehand.
+Download the Wear OS App from the Google Playstore and follow the instructions to pair the devices.
 
 ### Skadi apps
-Open the SDK, connect each device. When using Android Studio, use the dropdown with the options "wear" and "mobile" and choose the right device name to compile the app on the respective device type.
+Open the SDK, connect each device. When using Android Studio, use the dropdown with the options "wear" and "mobile".Choose the right device name to compile the app on the respective device type. 
+
 
 ## Smartwatch App
+Before the app can be installed, activate the developer mode by going to Settings->System->Info. Click the field "build number" 7 times. Go into the developer settings and activate ADB debugging.
 
 ### MainActivity
+
 
 ### SendThread
 
@@ -50,9 +54,9 @@ Make sure you run the ``receiver.sh`` script from the SMADIS deployment and the 
 ### Sensors are not reacting on Button click
 Make sure that Bluetooth is activated on both paired devices during the use.
 
-# Future work
+## Future work
 * Always active mobile phone app to prevent the data flow stop when the screen turns off
-* Error handling in mobile UI
+* Error messages in mobile App UI
 * Refinement (handling of deactivated Bluetooth connection, better message handling)
-* Testing with more heterogeneous IoT devices (Bluetooth
+* Extension of mobile app and testing with more IoT devices (earables, wristband, ...)
 * Dynamic UI elements adjusting to mobile phone height?
