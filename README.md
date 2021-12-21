@@ -42,10 +42,10 @@ Open the SDK, connect each device. When using Android Studio, use the dropdown w
 
 ### MainActivity
 
-### General
+#### General
 The app consists of a table view on top, a reset button to reset all sensors and a button toggling the connection to Hono. In the table, the buttons on the left toggle wear sensors, the text in the middle is merely static text and the right part shows either that the sensor is off (default value) or the latest received value of the concerning sensor. By default, the sensor buttons are disabled and are only enabled once the phone is successfully connected to Hono. Connecting and Disconnecting are handled in the MainActivity to ensure that the updating of button texts and activation/deactivation of sensor buttons only happens on a successful ``ActionCallback(...)``.
 
-### Hono connection
+#### Hono connection
 **NOTE:** Ensure that SMADDIS' ``receiver.sh`` script is running! To start the Connection to Hono, click the lowest button.
 
 <img src="https://user-images.githubusercontent.com/70896815/146928959-22cd1cd9-abdb-4fe3-8cd9-8d09f8024180.jpg" width="30%">
@@ -54,7 +54,7 @@ The connection might take 2-3 seconds. Once the connection was successful the te
 
 <img src="https://user-images.githubusercontent.com/70896815/146928971-fc31a712-7047-4d51-82c1-c95f34845d6a.jpg" width="30%">
 
-### MQTT Client and Credentials
+#### MQTT Client and Credentials
 As mentioned, the generated IPs and IDs have to be added in the mobile app to register it as the MQTT client belonging to the generated MQTT broker. Following string are important to note:
 
 |String name|Description|
@@ -65,28 +65,47 @@ As mentioned, the generated IPs and IDs have to be added in the mobile app to re
 |USERNAME|Hono requires any device to authenticate. User name is in the format ``CLIENT_DEVICE_ID@TENANT_ID``|
 |PASSWORD|See in code. If password changes please contact the owners of the SMADDIS project|
 
-### Using Sensor buttons
+#### Sensor Activation / Deactivation
 **NOTE:** Ensure that bluetooth is on! When in doubt, the Wear OS app shows whether the paired devices are connected.
+
+(WIP)
+* Button toggling sensors
+
+#### Message Handling
+* Messages ("heartRate", "accelerator", "gyroscope", "light")
+* topic, prefixes
 
 ### PahoMQTTClient
 
-Merely a helper class to bloat the MainActivity class a bit less. Holds additional connection and disconnection options as well as the method to publish received data to the MQTT broker.
+Merely a helper class to bloat the MainActivity class a bit less. Holds additional connection and disconnection options as well as the method to publish received data to the MQTT broker. Subscribe/Unsubscribe functions of the MQTT protocol and therefore the corresponding methods are not needed for this application as the mobile phone doesn't receive messages from the MQTT broker.
+
+### SendThread
+
+* Messaging via Data Layer API
+* Nodes
 
 ## Wear App
 
 ### MainActivity
 
+#### General
 The app consists of a static table view with the name of each sensor on the left and its current values ("off" by default or when turned off by user input in the mobile app). The wear app waits for the buttons in the mobile app to be pushed.
+
+#### Message handling
+
+* Prefixes
 
 ![polar app_off](https://user-images.githubusercontent.com/70896815/146926377-4b4e64fc-8959-4f32-ac46-389b33f141c7.jpg)
 
-### SendThread
-
 ### AmbientCallback
 
-If the display wear device is not touched for a while, it goes into the start screen again. To prevent it making the MainActivity implement the ``AmbientModeSupport.AmbientCallbackProvider`` class and attaching an instance of the ``AmbientController`` to it is sufficient to prevent this and make the app be always on.
+If the display wear device is not touched for a while, it goes into the start screen again. To prevent it making the ``MainActivity`` implement the ``AmbientModeSupport.AmbientCallbackProvider`` class and attaching an instance of the ``AmbientController`` to it is sufficient to prevent this and make the app be always on:
 
 ``AmbientModeSupport.AmbientController ambientController = AmbientModeSupport.attach(this);``
+
+### SendThread
+
+same as [Mobile SendThread](#sendthread).
 
 ## Trouble shooting
 
