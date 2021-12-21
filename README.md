@@ -1,7 +1,7 @@
 # Polar M600 Sensor Data App - "Skadi"
 
 ## General info
-The Skadi system consists of a wear app used by the Polar M600 smartwatch and a mobile app used by any mobile phone as well as an instance of the smad azure cloud by SMADDIS including Eclipse Hono (see https://github.com/smaddis/smad-deploy-azure). This is a first prototype of a system that feeds the smad cloud with data from an IoT device with a centralized control unit.
+The Skadi system consists of a wear app designed specifically for the Polar M600 smartwatch and a mobile app used by any mobile phone as well as an instance of the smad azure cloud by SMADDIS including Eclipse Hono (see https://github.com/smaddis/smad-deploy-azure). This is a first prototype of a system that feeds the smad cloud with data from an IoT device with a centralized control unit, in that case the mobile phone.
 
 Both apps in combination will be referred as companion apps. The connection and messaging between the apps runs through the API Data layer. For further information check the following chapters of the official Android Wear OS documentation:
 * [Send and sync data on Wear OS](https://developer.android.com/training/wearables/data/network-access)
@@ -18,9 +18,7 @@ The connection between the mobile app and the cloud is handled by Eclipse Hono a
 * USB debugging in mobile phone activated, ADB debugging in wear activated
 
 ### SMADIS deployment / Hono tenant
-Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT broker which will receive the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mainactivity-1). Once it was succesfully generated, run the ``receiver.sh`` script.
-
-**NOTE**: The script has to be running to make the mobile app work properly.
+Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT broker which will receive the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mqtt-client-and-credentials). Once it was succesfully generated, run the ``receiver.sh`` script everytime when using Skadi.
 
 ### Wear OS
 **NOTE**: The companion apps assume, that the concerning devices are already paired beforehand.
@@ -48,17 +46,31 @@ Open the SDK, connect each device. When using Android Studio, use the dropdown w
 The app consists of a table view on top, a reset button to reset all sensors and a button toggling the connection to Hono. In the table, the buttons on the left toggle wear sensors, the text in the middle is merely static text and the right part shows either that the sensor is off (default value) or the latest received value of the concerning sensor. By default, the sensor buttons are disabled and are only enabled once the phone is successfully connected to Hono. Connecting and Disconnecting are handled in the MainActivity to ensure that the updating of button texts and activation/deactivation of sensor buttons only happens on a successful ``ActionCallback(...)``.
 
 ### Hono connection
-Ensure that SMADIS' ``receiver.sh`` script is running! To start the Connection to Hono, click the lowest button.
+**NOTE:** Ensure that SMADDIS' ``receiver.sh`` script is running! To start the Connection to Hono, click the lowest button.
 
-![mobile1](https://user-images.githubusercontent.com/70896815/146928959-22cd1cd9-abdb-4fe3-8cd9-8d09f8024180.jpg)
+<img src="https://user-images.githubusercontent.com/70896815/146928959-22cd1cd9-abdb-4fe3-8cd9-8d09f8024180.jpg" width="30%">
 
-The connection might take a few seconds. Once the connection was successful the status message shows the status "connected" and the sensor buttons are ready to use.
+The connection might take 2-3 seconds. Once the connection was successful the text view below the hono button shows the status "connected", the sensor buttons are enabled and ready to use.
 
-![mobile2](https://user-images.githubusercontent.com/70896815/146928971-fc31a712-7047-4d51-82c1-c95f34845d6a.jpg)
+<img src="https://user-images.githubusercontent.com/70896815/146928971-fc31a712-7047-4d51-82c1-c95f34845d6a.jpg" width="30%">
+
+### MQTT Client and Credentials
+As mentioned, the generated IPs and IDs have to be added in the mobile app to register it as the MQTT client belonging to the generated MQTT broker. Following string are important to note:
+
+|String name|Description|
+|--------|----------|
+|MQTT_ADAPTER_IP_URI|URI of the MQTT broker, has the format ``tcp://<ADAPTER_IP>:1883``, whereas 1883 is the default port|
+|TENANT_ID|Tenant ID is passed as an argument when connecting to the Hono server, corresponding to the broker ID| 
+|CLIENT_DEVICE_ID|ID for the device that wants to act as the client connecting to the broker, also passed during connection handling|
+|USERNAME|Hono requires any device to authenticate. User name is in the format ``CLIENT_DEVICE_ID@TENANT_ID``|
+|PASSWORD|See in code. If password changes please contact the owners of the SMADDIS project|
+
+### Using Sensor buttons
+**NOTE:** Ensure that bluetooth is on! When in doubt, the Wear OS app shows whether the paired devices are connected.
 
 ### PahoMQTTClient
 
-Merely a helper class that holds additional connection and disconnection options as well as the method to publish received data to the MQTT broker.
+Merely a helper class to bloat the MainActivity class a bit less. Holds additional connection and disconnection options as well as the method to publish received data to the MQTT broker.
 
 ## Wear App
 
