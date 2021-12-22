@@ -18,7 +18,7 @@ The connection between the mobile app and the cloud is handled by Eclipse Hono a
 * USB debugging in mobile phone activated, ADB debugging in wear activated
 
 ### SMADIS deployment / Hono tenant
-Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT broker which will receive the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mqtt-client-and-credentials). Once it was succesfully generated, run the ``receiver.sh`` script everytime when using Skadi.
+Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT broker (also known as a tenant) which will receive the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mqtt-client-and-credentials). Once it was succesfully generated, run the ``receiver.sh`` script everytime when using Skadi.
 
 ### Wear OS
 **NOTE**: The companion apps assume, that the concerning devices are already paired beforehand.
