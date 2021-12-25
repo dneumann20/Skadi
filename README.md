@@ -13,7 +13,7 @@ The connection between the mobile app and the cloud is handled by Eclipse Hono a
 * Linux OS
 * A working Kubernetes cluster with the SMADDIS deployment
 * Java JDK
-* Android Studio or other preferred IDE (includes Android SDK and adb Manager)
+* Android Studio (includes Android SDK and adb Manager) or other preferred IDE 
 * Wear OS Android app to pair smartphone and smartwatch
 * USB debugging in mobile phone activated, ADB debugging in wear activated
 
