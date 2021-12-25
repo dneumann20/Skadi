@@ -59,21 +59,27 @@ As mentioned, the generated IPs and IDs have to be added in the mobile app to re
 
 |String name|Description|
 |--------|----------|
-|MQTT_ADAPTER_IP_URI|URI of the MQTT broker, has the format ``tcp://<ADAPTER_IP>:1883``, whereas 1883 is the default port|
+|MQTT_ADAPTER_IP_URI|URI of the MQTT broker, has the format ``tcp://<ADAPTER_IP>:1883`` with 1883 as default port|
 |TENANT_ID|Tenant ID is passed as an argument when connecting to the Hono server, corresponding to the broker ID| 
 |CLIENT_DEVICE_ID|ID for the device that wants to act as the client connecting to the broker, also passed during connection handling|
 |USERNAME|Hono requires any device to authenticate. User name is in the format ``CLIENT_DEVICE_ID@TENANT_ID``|
 |PASSWORD|See in code. If password changes please contact the owners of the SMADDIS project|
 
-#### Sensor Activation / Deactivation
+#### Sensors and Activation / Deactivation
 **NOTE:** Ensure that bluetooth is on! When in doubt, the Wear OS app shows whether the paired devices are connected.
 
-(WIP)
-* Button toggling sensors
+Clicking a button makes the mobile app send a message to the wear app corresponding to the name of the sensor and toggles them on and off. For this prototype following sensors are available:
+* Heart Rate
+* Gyroscope
+* Accelerator
+* Light
+
+Every sensor view has the initial value of a zero string "0" which is overwritten once the sensor sends its data.
 
 #### Message Handling
-* Messages ("heartRate", "accelerator", "gyroscope", "light")
-* topic, prefixes
+The messages received by the wear are simply the current value of a sensor with a prefix to distinguish which sensor sent the message to the mobile app (more details in [Wear Message Handling](#message-handling-1)).
+
+Immediately after receiving a sensor value, the prefix is removed and forwarded to Hono via MQTT. To distinguish the type of messages for the MQTT broker, the message is sent (or published in terms of MQTT) with a topic as string. The SMADDIS deployment requires the topic to be in the format ``event/<TENANT_ID>/<CLIENT_DEVICE_ID>/topic``.
 
 ### PahoMQTTClient
 
