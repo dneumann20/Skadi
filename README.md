@@ -80,7 +80,7 @@ Every sensor view has the initial value of a zero string "0" which is overwritte
 Pressing the Reset button the mobile app sends the string "reset" to turn off all sensors and reset the associated views and buttons.
 
 #### Message Handling
-The messages received by the wear are simply the current value of a sensor with a character as prefix to distinguish which sensor sent the message to the mobile app (more details in [Wear Message Handling](#message-handling-1)).
+The messages received by the wear are simply the current value of a sensor with a character as prefix to distinguish which sensor sent the message to the mobile app (more details in [Preprocession of Sensor Values and Prefixes](#preprocession-of-sensor-values-and-prefixes)).
 
 Immediately after receiving a sensor value, the prefix is removed and forwarded to Hono via MQTT. To distinguish the type of messages for the MQTT broker, the message is sent (or published in terms of MQTT) with a topic as string. The SMADDIS deployment requires the topic to be in the format ``event/<TENANT_ID>/<CLIENT_DEVICE_ID>/topic``.
 
@@ -111,7 +111,7 @@ Some of the sensors need preprocession before the data is sent to the mobile app
 
 The gyroscope and accelerator sensors produce 3-dimensional values on the x,y and z axis. For the prototype only their x-values were used. These sensors are very sensitive and change the sensor value on the slightest movement. To prevent a massive overload on messages and freezing the mobile app due to it, the app subtracts the old and new sensor value and only updates as well as sends it only on a more signifant change. For testing purposes the gyroscope's threshold value to change is over 1 and the accelerator's threshold is 2.
 
-As mentioned in [Mobile Message Handling](#message-handling), the value is sent as a message via the Data Layer API with a prefix character to distinguish which sensor the data is from.
+As mentioned in [Message Handling](#message-handling), the value is sent as a message via the Data Layer API with a prefix character to distinguish which sensor the data is from.
 
 ### AmbientCallback
 
