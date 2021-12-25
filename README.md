@@ -126,15 +126,14 @@ same as [Mobile SendThread](#sendthread).
 ## Trouble shooting
 
 ### No popup in wear for giving permission over body sensors
-Plugin the wear via usb cable. Open a terminal and run ``adb devices``. The device will show a message  "no permissions (...) are your udev rules wrong?".
+Plugin the wear via usb cable. Open a terminal and run ``adb devices``. The device list should show a message like "no permissions (...) are your udev rules wrong?".
 
 * Run ``lsusb``
 * and find the entry of the polar watch. The IDs might be in the form of ``4e02:c003`` whereas ``4e02`` is the ``idVendor`` and ``c003`` the ``idProduct``
 * Open an editor with ``sudo vim /etc/udev/rules.d/51-android.rules``
-* Add following: ``SUBSYSTEM=="usb", ATTR{idVendor}=="4e02", ATTR{idProduct}=="c003", MODE="0666", GROUP="plugdev"``
-* Run following:
-* ``sudo udevadm control --reload-rules``
-* Running ``adb devices`` should now have the device listed properly
+* Add ``SUBSYSTEM=="usb", ATTR{idVendor}=="4e02", ATTR{idProduct}=="c003", MODE="0666", GROUP="plugdev"``, save file
+* Run ``sudo udevadm control --reload-rules``
+* Running ``adb devices`` again should now have the device listed properly
 
 ### Connection to Hono is not working on the first try
 Sometimes the connection does not work on the first try and fail with an immediate timeout. This is sadly a known isue of the PahoMQTTClient library. The second time should usually work out.
