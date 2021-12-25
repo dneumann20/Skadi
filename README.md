@@ -99,11 +99,11 @@ This thread uses the Data Layer API, in which every device (including the mobile
 #### General
 The app consists of a static table view with the name of each sensor on the left and its current values ("off" by default or when turned off by user input in the mobile app) as well as a basic info text. The app waits for the sensor buttons on the mobile app to be pushed.
 
-![polar app_off](https://user-images.githubusercontent.com/70896815/146926377-4b4e64fc-8959-4f32-ac46-389b33f141c7.jpg)
+![polar sensors_off](https://user-images.githubusercontent.com/70896815/146926377-4b4e64fc-8959-4f32-ac46-389b33f141c7.jpg)
 
 After the app receives a message with the name of a sensor type ("heartRate","gyroscope","accelerator","light"), the associated sensor is toggled. On receiving "reset" as message the app is reset to default state.
 
-(TODO screenshot with sensor data displayed)
+![polar sensors_on](https://user-images.githubusercontent.com/70896815/147389556-1c2ebd4a-3772-42f9-89c5-7e18655b1447.jpg)
 
 #### Preprocession of Sensor Values and Prefixes
 
