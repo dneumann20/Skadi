@@ -74,10 +74,13 @@ Clicking a button makes the mobile app send a message to the wear app correspond
 * Accelerator
 * Light
 
-Every sensor view has the initial value of a zero string "0" which is overwritten once the sensor sends its data.
+Every sensor view has the initial value of a zero string "0" which is overwritten once the sensor sends its data. 
+
+#### Reset Button
+Pressing the Reset button the mobile app sends the string "reset" to turn off all sensors and reset the associated views and buttons.
 
 #### Message Handling
-The messages received by the wear are simply the current value of a sensor with a prefix to distinguish which sensor sent the message to the mobile app (more details in [Wear Message Handling](#message-handling-1)).
+The messages received by the wear are simply the current value of a sensor with a character as prefix to distinguish which sensor sent the message to the mobile app (more details in [Wear Message Handling](#message-handling-1)).
 
 Immediately after receiving a sensor value, the prefix is removed and forwarded to Hono via MQTT. To distinguish the type of messages for the MQTT broker, the message is sent (or published in terms of MQTT) with a topic as string. The SMADDIS deployment requires the topic to be in the format ``event/<TENANT_ID>/<CLIENT_DEVICE_ID>/topic``.
 
@@ -87,21 +90,28 @@ Merely a helper class to bloat the MainActivity class a bit less. Holds addition
 
 ### SendThread
 
-* Messaging via Data Layer API
-* Nodes
+This thread uses the Data Layer API, in which every device (including the mobile phone) that is connected via the Wear OS app is a Node. It gets all nodes connected to the current device and broadcasts the message via a uniquely identified path (``"/message_path"`` in this case). For this prototype it is assumed that the Polar m600 is the only node connected, so the broadcast does not matter.
 
 ## Wear App
 
 ### MainActivity
 
 #### General
-The app consists of a static table view with the name of each sensor on the left and its current values ("off" by default or when turned off by user input in the mobile app). The wear app waits for the buttons in the mobile app to be pushed.
-
-#### Message handling
-
-* Prefixes
+The app consists of a static table view with the name of each sensor on the left and its current values ("off" by default or when turned off by user input in the mobile app) as well as a basic info text. The app waits for the sensor buttons on the mobile app to be pushed.
 
 ![polar app_off](https://user-images.githubusercontent.com/70896815/146926377-4b4e64fc-8959-4f32-ac46-389b33f141c7.jpg)
+
+After the app receives a message with the name of a sensor type ("heartRate","gyroscope","accelerator","light"), the associated sensor is toggled. On receiving "reset" as message the app is reset to default state.
+
+(TODO screenshot with sensor data displayed)
+
+#### Preprocession of Sensor Values and Prefixes
+
+Some of the sensors need preprocession before the data is sent to the mobile app. In case of the heart rate and light sensor, both output values are one-dimensional and do not need preprocessing (heart rate value is casted as Integer as it does not have any decimal number anyway).
+
+The gyroscope and accelerator sensors produce 3-dimensional values on the x,y and z axis. For the prototype only their x-values were used. These sensors are very sensitive and change the sensor value on the slightest movement. To prevent a massive overload on messages and freezing the mobile app due to it, the app subtracts the old and new sensor value and only updates as well as sends it only on a more signifant change. For testing purposes the gyroscope's threshold value to change is over 1 and the accelerator's threshold is 2.
+
+As mentioned in [Mobile Message Handling](#message-handling), the value is sent as a message via the Data Layer API with a prefix character to distinguish which sensor the data is from.
 
 ### AmbientCallback
 
@@ -116,7 +126,15 @@ same as [Mobile SendThread](#sendthread).
 ## Trouble shooting
 
 ### No popup in wear for giving permission over body sensors
-adb devices permission (WIP)
+Plugin the wear via usb cable. Open a terminal and run ``adb devices``. The device will show a message  "no permissions (...) are your udev rules wrong?".
+
+* Run ``lsusb``
+* and find the entry of the polar watch. The IDs might be in the form of ``4e02:c003`` whereas ``4e02`` is the ``idVendor`` and ``c003`` the ``idProduct``
+* Open an editor with ``sudo vim /etc/udev/rules.d/51-android.rules``
+* Add following: ``SUBSYSTEM=="usb", ATTR{idVendor}=="4e02", ATTR{idProduct}=="c003", MODE="0666", GROUP="plugdev"``
+* Run following:
+* ``sudo udevadm control --reload-rules``
+* Running ``adb devices`` should now have the device listed properly
 
 ### Connection to Hono is not working on the first try
 Sometimes the connection does not work on the first try and fail with an immediate timeout. This is sadly a known isue of the PahoMQTTClient library. The second time should usually work out.
@@ -129,5 +147,5 @@ Make sure that Bluetooth is activated on both paired devices during the use.
 
 ## Future work
 * Always active mobile phone app to prevent the data flow stop when the screen turns off
-* Refinements like error handling in case of connection losses between phone+hono or phone+wear, handling of deactivated Bluetooth
+* Refinements like error handling in case of connection losses between phone+hono or phone+wear
 * Extension of mobile app and testing with more IoT devices (earables, wristband, ...)
