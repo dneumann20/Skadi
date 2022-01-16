@@ -4,7 +4,7 @@
 The Skadi system consists of a wear app designed specifically for the Polar M600 smartwatch and a mobile app used by any mobile phone as well as an instance of the smad azure cloud by SMADDIS including Eclipse Hono (see https://github.com/smaddis/smad-deploy-azure). This is a first prototype of a system that feeds the smad cloud with data from an IoT device with a centralized control unit, in that case the mobile phone.
 
 Both apps in combination will be referred as companion apps. The connection and messaging between the apps runs through the API Data layer. For further information check the following chapters of the official Android Wear OS documentation:
-* [Send and sync data on Wear OS](https://developer.android.com/training/wearables/data/network-access)
+* [Send and sync data on Wear OS](https://developer.android.com/training/wearables/data/data-layer)
 * [Access the Wearable Data Layer](https://developer.android.com/training/wearables/data/accessing)
 
 The connection between the mobile app and the cloud is handled by Eclipse Hono as the interface to connect the end points and the MQTT protocol for light weight message communication. The mobile app acts as the MQTT client and the Hono instance as the MQTT broker (see https://mqtt.org/ for more info).
