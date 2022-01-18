@@ -17,8 +17,8 @@ The connection between the mobile app and the cloud is handled by Eclipse Hono a
 * Wear OS Android app to pair smartphone and smartwatch
 * USB debugging in mobile phone activated, ADB debugging in wear activated
 
-### SMADIS deployment / Hono tenant
-Before running the app, install the mentioned SMADIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT broker (also known as a tenant) which will receive the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mqtt-client-and-credentials). Once it was succesfully generated, run the ``receiver.sh`` script everytime when using Skadi.
+### SMADDIS deployment / Hono tenant
+Before running the app, install the mentioned SMADDIS deployment by following the instructions in the link above. After successful deployment, run the ``setup.sh`` script in ``/tests/honoscript`` to setup a MQTT adapter (also known as a tenant) which works as the broker for the MQTT connection and receives the incoming data and forward it to the cloud. The generated IP, tenant ID and client ID have to be used in the mobile app, exact usage of them is discussed in [Mobile MainActivity](#mqtt-client-and-credentials). Once it was succesfully generated, run the ``receiver.sh`` script everytime when using Skadi.
 
 ### Wear OS
 **NOTE**: The companion apps assume, that the concerning devices are already paired beforehand.
@@ -55,11 +55,11 @@ The connection might take 2-3 seconds. Once the connection was successful the te
 <img src="https://user-images.githubusercontent.com/70896815/146928971-fc31a712-7047-4d51-82c1-c95f34845d6a.jpg" width="30%">
 
 #### MQTT Client and Credentials
-As mentioned, the generated IPs and IDs have to be added in the mobile app to register it as the MQTT client belonging to the generated MQTT broker. Following string are important to note:
+As mentioned, the generated IPs and IDs have to be added in the mobile app to register it as the MQTT client belonging to the generated MQTT adapter. Following string are important to note:
 
 |String name|Description|
 |--------|----------|
-|MQTT_ADAPTER_IP_URI|URI of the MQTT broker, has the format ``tcp://<ADAPTER_IP>:1883`` with 1883 as default port|
+|MQTT_ADAPTER_IP_URI|URI of the MQTT adapter, has the format ``tcp://<ADAPTER_IP>:1883`` with 1883 as default port|
 |TENANT_ID|Tenant ID is passed as an argument when connecting to the Hono server, corresponding to the broker ID| 
 |CLIENT_DEVICE_ID|ID for the device that wants to act as the client connecting to the broker, also passed during connection handling|
 |USERNAME|Hono requires any device to authenticate. User name is in the format ``CLIENT_DEVICE_ID@TENANT_ID``|
