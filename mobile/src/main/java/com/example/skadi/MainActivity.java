@@ -55,9 +55,6 @@ public class MainActivity extends AppCompatActivity implements
 
     TextView honoConnectionStatus;
 
-    // TODO remove after testing
-
-
     boolean honoConnectionActive = false;
 
     /**
