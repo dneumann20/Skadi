@@ -1,7 +1,7 @@
 # Polar M600 Sensor Data App - "Skadi"
 
 ## General info
-The Skadi system consists of a wear app designed specifically for the Polar M600 smartwatch and a mobile app used by any mobile phone as well as an instance of the smad azure cloud by SMADDIS including Eclipse Hono (see https://github.com/smaddis/smad-deploy-azure). This is a first prototype of a system that feeds the smad cloud with data from an IoT device with a centralized control unit, in that case the mobile phone.
+The Skadi system (named after the norse goddess of the hunt and wilderness) consists of a wear app designed specifically for the Polar M600 smartwatch and a mobile app used by any mobile phone as well as an instance of the smad azure cloud by SMADDIS including Eclipse Hono (see https://github.com/smaddis/smad-deploy-azure). This is a first prototype of a system that feeds the smad cloud with data from an IoT device with a centralized control unit, in that case the mobile phone.
 
 Both apps in combination will be referred as companion apps. The connection and messaging between the apps runs through the API Data layer. For further information check the following chapters of the official Android Wear OS documentation:
 * [Send and sync data on Wear OS](https://developer.android.com/training/wearables/data/data-layer)
