@@ -28,6 +28,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.wear.ambient.AmbientModeSupport;
 
+// Derive from FragmentActivity so AmbientModeSupport can be attached to this class object
 public class MainActivity extends FragmentActivity implements SensorEventListener, MessageClient.OnMessageReceivedListener,
         AmbientModeSupport.AmbientCallbackProvider{
 
@@ -51,7 +52,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     private String gyroscopeValue_x = 0+"";
     private String acceleratorValue_x = 0+"";
     private String lightValue = 0+"";
-
+            
     private String oldGyroscopeValue_x = 0+"";
     private String oldAcceleratorValue_x = 0+"";
 
@@ -87,7 +88,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         //Set Message client
         messageClient = Wearable.getMessageClient(getApplicationContext());
 
-        // Check if App has access on the sensors, if not request it
+        // Check if App has access on body sensors like heart rate sensor, if not request it
         if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions( this, new String[] {  Manifest.permission.BODY_SENSORS  },2);
         }
@@ -97,12 +98,13 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     /**
      * Everytime a sensor value changes, send it via message and update the corresponding view
-     * Gyroscope and Accelerator "constantly" change their values, so the difference between new and old values are
-     * calculated and will be only updated on a significant change. Min difference was set on 1 for
-     * gyroscope and 2 for accelerator for testing reasons.
-     *
+     * Gyroscope and Accelerator "constantly" change their values on the very slightest movement,
+     * so the difference between new and old values are calculated and will be only updated on a
+     * significant change. Min difference was set on 1 for gyroscope and 2 for accelerator for testing reasons.
      * To differentiate the data of according sensors, the message is sent with a prefix character that is
      * removed in the mobile phone app again
+     * For this prototype only the x values of the gyroscope and accelerator were used
+     *
      * @param sensorEvent
      */
     @Override
@@ -146,7 +148,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     /**
      * Starts/Stops the transmission of the sensor data
-     * @param messageEvent : Message to start or stop the according sensor
+     * @param messageEvent : Message to toggle the corresponding sensor or reset all sensors at once
      */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
@@ -269,7 +271,6 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         this.gyroscopeSensorActivated = false;
         this.acceleratorSensorActivated = false;
         this.lightSensorActivated = false;
-
     }
 
     // auto override
