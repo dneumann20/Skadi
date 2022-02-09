@@ -31,9 +31,9 @@ public class PahoMqttClient {
     @NonNull
     public MqttConnectOptions getMqttConnectionOption(String username, String password) {
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+         // When clean session set on false, unacknowledged lost messages are re-sent after reconnecting 
         mqttConnectOptions.setCleanSession(false);
         mqttConnectOptions.setAutomaticReconnect(true);
-        //mqttConnectOptions.setWill(lastWill, "I am going offline".getBytes(), 1, true);
         mqttConnectOptions.setUserName(username);
         mqttConnectOptions.setPassword(password.toCharArray());
         return mqttConnectOptions;
@@ -43,8 +43,8 @@ public class PahoMqttClient {
             throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = msg.getBytes(StandardCharsets.UTF_8);
         MqttMessage message = new MqttMessage(encodedPayload);
-        message.setId(320);
-        message.setRetained(true);
+        message.setId(320); // needs to be set manually when clean session is set to false
+        message.setRetained(true); // Broker keeps a copy of the message
         message.setQos(qos);
         client.publish(topic, message);
     }
