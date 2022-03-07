@@ -43,8 +43,8 @@ public class PahoMqttClient {
             throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = msg.getBytes(StandardCharsets.UTF_8);
         MqttMessage message = new MqttMessage(encodedPayload);
-        message.setId(320); // needs to be set manually when clean session is set to false
-        message.setRetained(true); // Broker keeps a copy of the message
+        // message.setId(320);
+        // message.setRetained(true);
         message.setQos(qos);
         client.publish(topic, message);
     }
